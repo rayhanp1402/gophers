@@ -3,51 +3,68 @@ package extractor
 import (
 	"fmt"
 	"go/ast"
+	"go/parser"
 	"go/token"
 	"log"
 	"os"
 	"path/filepath"
-
-	"golang.org/x/tools/go/packages"
 )
 
 const outputDir = "./out"
 
 func ParsePackage(pkgPath string) {
-	// Resolve absolute path
-	cfg := &packages.Config{
-		Mode:  packages.LoadSyntax,
-		Fset:  token.NewFileSet(),
-		Tests: false,
-		Dir:   pkgPath,
+	// Ensure the output directory exists
+	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
+		log.Fatalf("Failed to create output directory: %v", err)
 	}
 
-	pkgs, err := packages.Load(cfg, pkgPath)
-	if err != nil {
-		log.Fatalf("Failed to load package: %v", err)
-	}
-
-	// Ensure pkgPath doesn't end with a separator (e.g., backslash or forward slash)
-	cleanPkgPath := filepath.Base(pkgPath) // Get the base name of the package directory
-	outputFilePath := filepath.Join(outputDir, cleanPkgPath+"_ast.txt")
-
-	outFile, err := os.Create(outputFilePath)
-	if err != nil {
-		log.Fatalf("Failed to create output file: %v", err)
-	}
-	defer outFile.Close()
-
-	// Set the output destination for log
-	log.SetOutput(outFile)
-
-	// Traverse the ASTs for all files in the package
-	for _, pkg := range pkgs {
-		for _, file := range pkg.Syntax {
-			fmt.Fprintf(outFile, "AST for file: %s\n", pkg.Fset.Position(file.Pos()))
-			ast.Fprint(outFile, pkg.Fset, file, nil)  // Write the AST to file
-			fmt.Fprintln(outFile)  // Newline for better readability
+	// Use filepath.Walk to traverse the directory
+	err := filepath.Walk(pkgPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			log.Printf("Error walking through path %s: %v", path, err)
+			return err
 		}
-	}
 
-	log.Printf("AST has been written to %s", outputFilePath)
+		// Only parse .go files
+		if !info.IsDir() && filepath.Ext(path) == ".go" {
+			// Open the Go file
+			file, err := os.Open(path)
+			if err != nil {
+				log.Printf("Failed to open file %s: %v", path, err)
+				return err
+			}
+			defer file.Close()
+
+			// Create a new file set for the file
+			fs := token.NewFileSet()
+
+			// Parse the Go file into an AST
+			node, err := parser.ParseFile(fs, path, file, parser.AllErrors)
+			if err != nil {
+				log.Printf("Failed to parse file %s: %v", path, err)
+				return err
+			}
+
+			// Create output file for the current file's AST
+			outputFilePath := filepath.Join(outputDir, fmt.Sprintf("%s_ast.txt", filepath.Base(path)))
+			outFile, err := os.Create(outputFilePath)
+			if err != nil {
+				log.Printf("Failed to create output file for %s: %v", path, err)
+				return err
+			}
+			defer outFile.Close()
+
+			// Write the AST to the output file
+			fmt.Fprintf(outFile, "AST for file: %s\n", path)
+			ast.Fprint(outFile, fs, node, nil)  // Write the AST to file
+			fmt.Fprintln(outFile)  // Newline for better readability
+
+			log.Printf("AST for %s has been written to %s", path, outputFilePath)
+		}
+		return nil
+	})
+
+	if err != nil {
+		log.Fatalf("Failed to walk through directory: %v", err)
+	}
 }
