@@ -4,114 +4,83 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/ast"
-	"go/parser"
 	"go/token"
 	"log"
 	"os"
-	"path/filepath"
+
+	"golang.org/x/tools/go/packages"
 )
 
 const rootOutputDir = "./out"
 
-func ParsePackage(pkgPath string) {
-    basePkgName := filepath.Base(pkgPath)
+func ParsePackage(dir string) {
+	fmt.Println("Parsing package:", dir)
 
-    // Use filepath.Walk to traverse the directory
-    err := filepath.Walk(pkgPath, func(path string, info os.FileInfo, err error) error {
-        if err != nil {
-            log.Printf("Error walking through path %s: %v", path, err)
-            return err
-        }
+	cfg := &packages.Config{
+		Mode:  packages.LoadAllSyntax, // Load full syntax tree & types
+		Dir:   dir,                    // Specify directory
+	}
+	pkgs, err := packages.Load(cfg, "./...")
+	if err != nil {
+		log.Fatalf("Failed to load package: %v", err)
+	}
 
-        if info.IsDir() {
-            return nil // Skip directories, we'll handle them dynamically
-        }
+	if len(pkgs) == 0 {
+		log.Fatal("No packages found")
+	}
 
-        // Only parse .go files
-        if filepath.Ext(path) == ".go" {
-            // Preserve subdirectory structure inside ./out
-            relPath, _ := filepath.Rel(pkgPath, path) 
-            outputDir := filepath.Join(rootOutputDir, basePkgName, filepath.Dir(relPath))
+	astNodes := map[string]*ASTNode{}
 
-            // Ensure the subdirectory exists
-            if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
-                log.Printf("Failed to create output directory %s: %v", outputDir, err)
-                return err
-            }
+	for _, pkg := range pkgs {
+		for ident, obj := range pkg.TypesInfo.Defs {
+			if obj == nil {
+				continue
+			}
+			position := pkg.Fset.Position(ident.Pos())
 
-            // Generate output file paths
-            astTxtPath := filepath.Join(outputDir, fmt.Sprintf("%s_ast.txt", filepath.Base(path)))
-            jsonAstPath := filepath.Join(outputDir, fmt.Sprintf("%s_ast.json", filepath.Base(path)))
+			astNodes[obj.Name()] = &ASTNode{
+				Name:     obj.Name(),
+				Type:     fmt.Sprintf("%v", obj.Type()),
+				Position: position,
+			}
+		}
 
-            // Open the Go file
-            file, err := os.Open(path)
-            if err != nil {
-                log.Printf("Failed to open file %s: %v", path, err)
-                return err
-            }
-            defer file.Close()
+		for ident, obj := range pkg.TypesInfo.Uses {
+			if obj == nil {
+				continue
+			}
+			position := pkg.Fset.Position(ident.Pos())
 
-            fs := token.NewFileSet()
-            node, err := parser.ParseFile(fs, path, file, parser.AllErrors)
-            if err != nil {
-                log.Printf("Failed to parse file %s: %v", path, err)
-                return err
-            }
+			refNode := &ASTNode{
+				Name:     ident.Name,
+				Type:     fmt.Sprintf("%v", obj.Type()),
+				Position: position,
+			}
 
-            // Write plain AST
-            if err := writeASTFile(astTxtPath, node, fs); err != nil {
-                return err
-            }
+			// Link reference to its definition
+			if defNode, found := astNodes[obj.Name()]; found {
+				defNode.References = append(defNode.References, refNode)
+				refNode.Definition = defNode
+			}
 
-            // Write JSON AST
-            if err := writeJSONFile(jsonAstPath, node, fs); err != nil {
-                return err
-            }
-        }
-        return nil
-    })
+			astNodes[fmt.Sprintf("%s@%s", ident.Name, position)] = refNode
+		}
+	}
 
-    if err != nil {
-        log.Fatalf("Failed to walk through directory: %v", err)
-    }
-}
+	// Convert AST to JSON
+	jsonData, err := json.MarshalIndent(astNodes, "", "  ")
+	if err != nil {
+		log.Fatalf("Failed to serialize AST to JSON: %v", err)
+	}
 
-// Writes plain AST to a text file
-func writeASTFile(filePath string, node *ast.File, fs *token.FileSet) error {
-    outFile, err := os.Create(filePath)
-    if err != nil {
-        log.Printf("Failed to create output file: %s, error: %v", filePath, err)
-        return err
-    }
-    defer outFile.Close()
+	// Write JSON to file
+	outputFile := "./out/ast_output.json"
+	err = os.WriteFile(outputFile, jsonData, 0644)
+	if err != nil {
+		log.Fatalf("Failed to write JSON to file: %v", err)
+	}
 
-    fmt.Fprintf(outFile, "AST for file: %s\n", filePath)
-    ast.Fprint(outFile, fs, node, nil)
-    fmt.Fprintln(outFile)
-
-    log.Printf("Plain AST written to %s", filePath)
-    return nil
-}
-
-// Writes JSON AST to a file
-func writeJSONFile(filePath string, node *ast.File, fs *token.FileSet) error {
-    jsonOutFile, err := os.Create(filePath)
-    if err != nil {
-        log.Printf("Failed to create JSON output file: %s, error: %v", filePath, err)
-        return err
-    }
-    defer jsonOutFile.Close()
-
-    astMap := convertASTToMap(node, fs)
-    encoder := json.NewEncoder(jsonOutFile)
-    encoder.SetIndent("", "  ")
-    if err := encoder.Encode(astMap); err != nil {
-        log.Printf("Failed to write JSON AST to file %s: %v", filePath, err)
-        return err
-    }
-
-    log.Printf("JSON AST written to %s", filePath)
-    return nil
+	fmt.Println("AST saved to", outputFile)
 }
 
 // convertASTToMap traverses the AST and converts it into a simplified structure without cyclic references
