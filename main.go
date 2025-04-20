@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"go/ast"
 	"log"
 	"os"
 	"path/filepath"
@@ -19,20 +20,35 @@ func main() {
 
 	dir := os.Args[1]
 
+	absPath, err := filepath.Abs(dir)
+	if err != nil {
+		log.Fatalf("Error resolving absolute path: %v", err)
+	}
+
 	fset, files, err := extractor.ParsePackage(dir)
 	if err != nil {
 		log.Fatalf("Error parsing package: %v", err)
 	}
 
-	fmt.Println("Parsed files:")
+	err = os.MkdirAll(OUTPUT_DIRECTORY, os.ModePerm)
+	if err != nil {
+		log.Fatalf("Error creating output directory: %v", err)
+	}
+
+	fmt.Println("Processing files:")
 	for path, astFile := range files {
 		fmt.Println("File:", path)
 
 		// Extract the filename (basename) for use of output file naming
 		baseName := filepath.Base(path)
-		astFileName := baseName[:len(baseName)-len(filepath.Ext(baseName))] + "_ast.txt"
+		astFileName := baseName[:len(baseName)-len(filepath.Ext(baseName))] + "_ast.json"
 		outputFilePath := filepath.Join(OUTPUT_DIRECTORY, astFileName)
 
-		extractor.WalkASTToFile(fset, astFile, outputFilePath)
+		err := extractor.ASTToJSON(fset, map[string]*ast.File{path: astFile}, outputFilePath, astFile.Name.Name, absPath)
+		if err != nil {
+			log.Printf("Error processing file %s: %v", path, err)
+		} else {
+			fmt.Printf("AST JSON successfully written for file %s\n", path)
+		}
 	}
 }

@@ -1,12 +1,46 @@
 package extractor
 
 import (
+	"encoding/json"
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"os"
 	"path/filepath"
 )
+
+type JSONNode struct {
+	Type      string   `json:"type"`
+	Name      string   `json:"name"`
+	Params    []string `json:"params,omitempty"`
+	Returns   []string `json:"returns,omitempty"`
+	Receiver  string   `json:"receiver,omitempty"`
+	Fields    []string `json:"fields,omitempty"`
+	Methods   []string `json:"methods,omitempty"`
+	Variables []string `json:"variables,omitempty"`
+	Position  Position `json:"position"`
+}
+
+type Position struct {
+	Line   int `json:"line"`
+	Column int `json:"column"`
+}
+
+type FileNode struct {
+	Filename string     `json:"filename"`
+	Functions []JSONNode `json:"functions"`
+	Methods   []JSONNode `json:"methods"`
+	Variables []JSONNode `json:"variables"`
+	Structs   []JSONNode `json:"structs"`
+	Interfaces []JSONNode `json:"interfaces"`
+}
+
+type PackageNode struct {
+	Name    string      `json:"name"`
+	Path    string      `json:"path"`
+	Files   []FileNode  `json:"files"`
+}
 
 // Parses a whole package (only the .go files) into a FileSet
 // dir is relative to this (gophers) package
@@ -39,4 +73,132 @@ func ParsePackage(dir string) (*token.FileSet, map[string]*ast.File, error) {
     }
 
     return fset, files, nil
+}
+
+// Traverse and extract relevant data into the custom JSON format
+func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath string, packageName string, dir string) error {
+	var packageNodes []PackageNode
+
+	absPath, err := filepath.Abs(dir)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		fileNode := FileNode{
+			Filename: file.Name.Name,
+		}
+
+		ast.Inspect(file, func(n ast.Node) bool {
+			if n == nil {
+				return true
+			}
+
+			pos := fset.Position(n.Pos())
+			position := Position{Line: pos.Line, Column: pos.Column}
+
+			switch x := n.(type) {
+			case *ast.FuncDecl:
+				if x.Recv == nil {
+					fileNode.Functions = append(fileNode.Functions, JSONNode{
+						Type:     "Function",
+						Name:     x.Name.Name,
+						Params:   extractParamTypes(x.Type.Params),
+						Returns:  extractParamTypes(x.Type.Results),
+						Receiver: "",
+						Position: position,
+					})
+				} else {
+					fileNode.Methods = append(fileNode.Methods, JSONNode{
+						Type:     "Method",
+						Name:     x.Name.Name,
+						Params:   extractParamTypes(x.Type.Params),
+						Returns:  extractParamTypes(x.Type.Results),
+						Receiver: x.Recv.List[0].Type.(*ast.Ident).Name,
+						Position: position,
+					})
+				}
+			case *ast.GenDecl:
+				for _, spec := range x.Specs {
+					switch s := spec.(type) {
+					case *ast.ValueSpec:
+						for _, name := range s.Names {
+							fileNode.Variables = append(fileNode.Variables, JSONNode{
+								Type:     "Variable",
+								Name:     name.Name,
+								Position: position,
+							})
+						}
+					case *ast.TypeSpec:
+						if t, ok := s.Type.(*ast.StructType); ok {
+							structNode := JSONNode{
+								Type:    "Struct",
+								Name:    s.Name.Name,
+								Position: position,
+							}
+							for _, field := range t.Fields.List {
+								for _, name := range field.Names {
+									structNode.Fields = append(structNode.Fields, name.Name)
+								}
+							}
+							fileNode.Structs = append(fileNode.Structs, structNode)
+						} else if t, ok := s.Type.(*ast.InterfaceType); ok {
+							interfaceNode := JSONNode{
+								Type:    "Interface",
+								Name:    s.Name.Name,
+								Position: position,
+							}
+							for _, method := range t.Methods.List {
+								for _, name := range method.Names {
+									interfaceNode.Methods = append(interfaceNode.Methods, name.Name)
+								}
+							}
+							fileNode.Interfaces = append(fileNode.Interfaces, interfaceNode)
+						}
+					}
+				}
+			}
+
+			return true
+		})
+
+		packageNode := PackageNode{
+			Name:  packageName,
+			Path:  absPath,
+			Files: append([]FileNode{fileNode}),
+		}
+
+		packageNodes = append(packageNodes, packageNode)
+	}
+
+	jsonData, err := json.MarshalIndent(packageNodes, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(outputPath, jsonData, 0644)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("JSON successfully written to %s\n", outputPath)
+	return nil
+}
+
+// Extracts parameter types from a parameter list
+func extractParamTypes(fields *ast.FieldList) []string {
+	var paramTypes []string
+	if fields != nil {
+		for _, field := range fields.List {
+			switch typ := field.Type.(type) {
+			case *ast.Ident:
+				paramTypes = append(paramTypes, typ.Name)
+			case *ast.ArrayType:
+				if ident, ok := typ.Elt.(*ast.Ident); ok {
+					paramTypes = append(paramTypes, ident.Name+"[]")
+				}
+			}
+		}
+	}
+	return paramTypes
 }
