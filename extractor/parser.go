@@ -13,8 +13,8 @@ import (
 type JSONNode struct {
 	Type      string   `json:"type"`
 	Name      string   `json:"name"`
-	Params    []string `json:"params,omitempty"`
-	Returns   []string `json:"returns,omitempty"`
+	Params  map[string]string `json:"params,omitempty"`
+	Returns map[string]string `json:"returns,omitempty"`
 	Receiver  string   `json:"receiver,omitempty"`
 	Fields    []string `json:"fields,omitempty"`
 	Methods   []string `json:"methods,omitempty"`
@@ -185,20 +185,40 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 	return nil
 }
 
-// Extracts parameter types from a parameter list
-func extractParamTypes(fields *ast.FieldList) []string {
-	var paramTypes []string
+// Extracts parameters from a parameter list
+func extractParamTypes(fields *ast.FieldList) map[string]string {
+	paramMap := make(map[string]string)
 	if fields != nil {
-		for _, field := range fields.List {
-			switch typ := field.Type.(type) {
-			case *ast.Ident:
-				paramTypes = append(paramTypes, typ.Name)
-			case *ast.ArrayType:
-				if ident, ok := typ.Elt.(*ast.Ident); ok {
-					paramTypes = append(paramTypes, ident.Name+"[]")
+		for i, field := range fields.List {
+			typeStr := extractType(field.Type)
+			// If the parameter has names (e.g., func(x int)), use them
+			if len(field.Names) > 0 {
+				for _, name := range field.Names {
+					paramMap[name.Name] = typeStr
 				}
+			} else {
+				// Anonymous param (e.g., func(int)) – give it a generated name
+				paramMap[fmt.Sprintf("param%d", i)] = typeStr
 			}
 		}
 	}
-	return paramTypes
+	return paramMap
+}
+
+func extractType(expr ast.Expr) string {
+	switch t := expr.(type) {
+	case *ast.Ident:
+		return t.Name
+	case *ast.ArrayType:
+		return "[]" + extractType(t.Elt)
+	case *ast.StarExpr:
+		return "*" + extractType(t.X)
+	case *ast.SelectorExpr:
+		// For imported types like `pkg.Type`
+		return extractType(t.X) + "." + t.Sel.Name
+	case *ast.MapType:
+		return "map[" + extractType(t.Key) + "]" + extractType(t.Value)
+	default:
+		return fmt.Sprintf("%T", expr) // fallback
+	}
 }
