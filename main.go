@@ -36,6 +36,12 @@ func main() {
 	}
 
 	fmt.Println("Processing files:")
+
+	resolvedNames, err := extractor.ResolveNames(fset, files, dir)
+	if err != nil {
+		return
+	}
+
 	for path, astFile := range files {
 		fmt.Println("File:", path)
 
@@ -44,7 +50,7 @@ func main() {
 		astFileName := baseName[:len(baseName)-len(filepath.Ext(baseName))] + "_ast.json"
 		outputFilePath := filepath.Join(OUTPUT_DIRECTORY, astFileName)
 
-		err := extractor.ASTToJSON(fset, map[string]*ast.File{path: astFile}, outputFilePath, astFile.Name.Name, absPath)
+		err := extractor.ASTToJSON(fset, map[string]*ast.File{path: astFile}, outputFilePath, astFile.Name.Name, absPath, resolvedNames)
 		if err != nil {
 			log.Printf("Error processing file %s: %v", path, err)
 		} else {

@@ -156,23 +156,33 @@ func ResolveNames(fset *token.FileSet, files map[string]*ast.File, rootDir strin
 		// fmt.Printf("Processing file: %s (URI: %s)\n", path, uri)
 
 		ast.Inspect(file, func(n ast.Node) bool {
-			ident, ok := n.(*ast.Ident)
-			if !ok || ident.Obj == nil {
+			var ident *ast.Ident
+
+			switch node := n.(type) {
+			case *ast.Ident:
+				ident = node
+			case *ast.SelectorExpr:
+				ident = node.Sel
+			case *ast.CallExpr:
+				if sel, ok := node.Fun.(*ast.SelectorExpr); ok {
+					ident = sel.Sel
+				} else if id, ok := node.Fun.(*ast.Ident); ok {
+					ident = id
+				}
+			}
+
+			if ident == nil {
 				return true
 			}
 
-			// fmt.Printf("Found identifier: %s at position: %v\n", ident.Name, fset.Position(ident.Pos()))
-
 			pos := fset.Position(ident.Pos())
+
+			// You might need to convert column from bytes to runes here if non-ASCII exists.
 			info, err := client.Definition(uri, pos.Line-1, pos.Column-1)
 			if err == nil && info != nil {
-				// fmt.Printf("Resolved definition for identifier %s: %+v\n", ident.Name, info)
-
 				info.Name = ident.Name
 				info.Package = file.Name.Name
 				resolved[ident.Pos()] = info
-			} else {
-				// fmt.Printf("Failed to resolve definition for %s: %v\n", ident.Name, err)
 			}
 			return true
 		})

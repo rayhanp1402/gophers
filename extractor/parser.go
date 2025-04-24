@@ -20,6 +20,7 @@ type JSONNode struct {
 	Methods   []string `json:"methods,omitempty"`
 	Variables []string `json:"variables,omitempty"`
 	Position  Position `json:"position"`
+	Usages    []Position `json:"usages,omitempty"`
 }
 
 type Position struct {
@@ -76,16 +77,24 @@ func ParsePackage(dir string) (*token.FileSet, map[string]*ast.File, error) {
 }
 
 // Traverse and extract relevant data into the custom JSON format
-func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath string, packageName string, dir string) error {
+func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath string, packageName string, dir string, resolvedNames map[token.Pos]*DefinitionInfo) error {
 	var packageNodes []PackageNode
 
-	// Get resolved names
-	resolvedNames, err := ResolveNames(fset, files, dir)
-	if err != nil {
-		return err
-	}
-
 	// fmt.Printf("Resolved names: %+v\n", resolvedNames)
+
+	// for pos, obj := range resolvedNames {
+	// 	if obj == nil {
+	// 		continue
+	// 	}
+	// 	position := fset.Position(pos)
+	// 	fmt.Printf("%d: %s (in %s:%d:%d)\n",
+	// 		pos,
+	// 		obj.Name,           // identifier name
+	// 		position.Filename,
+	// 		position.Line,
+	// 		position.Column,
+	// 	)
+	// }
 
 	absPath, err := filepath.Abs(dir)
 	if err != nil {
@@ -96,6 +105,9 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 		fileNode := FileNode{
 			Filename: file.Name.Name,
 		}
+
+		// Map to track where variables, functions, etc. are used
+		usageMap := make(map[string][]Position)
 
 		ast.Inspect(file, func(n ast.Node) bool {
 			if n == nil {
@@ -117,11 +129,8 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 						Receiver: "",
 						Position: position,
 					}
-			
-					// Add resolved name if available
-					if defInfo, ok := resolvedNames[x.Name.Pos()]; ok {
-						funcNode.Name = defInfo.Name
-					}
+
+					TrackUsages(x.Name.Name, resolvedNames, usageMap, fset)
 			
 					fileNode.Functions = append(fileNode.Functions, funcNode)
 				} else {
@@ -143,11 +152,8 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 						Receiver: receiverName,
 						Position: position,
 					}
-			
-					// Add resolved name if available
-					if defInfo, ok := resolvedNames[x.Name.Pos()]; ok {
-						methodNode.Name = defInfo.Name
-					}
+
+					TrackUsages(x.Name.Name, resolvedNames, usageMap, fset)
 			
 					fileNode.Methods = append(fileNode.Methods, methodNode)
 				}
@@ -162,10 +168,7 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 								Position: position,
 							}
 
-							// Add resolved name if available
-							if defInfo, ok := resolvedNames[name.Pos()]; ok {
-								variableNode.Name = defInfo.Name
-							}
+							TrackUsages(name.Name, resolvedNames, usageMap, fset)
 
 							fileNode.Variables = append(fileNode.Variables, variableNode)
 						}
@@ -181,6 +184,9 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 									structNode.Fields = append(structNode.Fields, name.Name)
 								}
 							}
+
+							TrackUsages(s.Name.Name, resolvedNames, usageMap, fset)
+							
 							fileNode.Structs = append(fileNode.Structs, structNode)
 						} else if t, ok := s.Type.(*ast.InterfaceType); ok {
 							interfaceNode := JSONNode{
@@ -193,6 +199,9 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 									interfaceNode.Methods = append(interfaceNode.Methods, name.Name)
 								}
 							}
+
+							TrackUsages(s.Name.Name, resolvedNames, usageMap, fset)
+
 							fileNode.Interfaces = append(fileNode.Interfaces, interfaceNode)
 						}
 					}
@@ -201,6 +210,13 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 
 			return true
 		})
+
+		for idx := range fileNode.Functions {
+			node := &fileNode.Functions[idx]
+			if usages, found := usageMap[node.Name]; found {
+				node.Usages = usages
+			}
+		}
 
 		packageNode := PackageNode{
 			Name:  packageName,
