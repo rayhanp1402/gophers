@@ -96,11 +96,6 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 	// 	)
 	// }
 
-	absPath, err := filepath.Abs(dir)
-	if err != nil {
-		return err
-	}
-
 	for _, file := range files {
 		fileNode := FileNode{
 			Filename: file.Name.Name,
@@ -219,7 +214,7 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 
 		packageNode := PackageNode{
 			Name:  packageName,
-			Path:  absPath,
+			Path:  fset.Position(file.Pos()).Filename,
 			Files: []FileNode{fileNode},
 		}
 
