@@ -46,6 +46,7 @@ type PackageNode struct {
 type Usage struct {
 	Position Position `json:"position"`
 	Path     string   `json:"path"`
+	Scope  	 string	  `json:"scope,omitempty"`
 }
 
 // Parses a whole package (only the .go files) into a FileSet

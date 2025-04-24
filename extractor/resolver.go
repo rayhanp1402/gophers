@@ -11,11 +11,12 @@ import (
 )
 
 type DefinitionInfo struct {
-	Name     string
-	URI      string
-	Line     int
+	Name      string
+	URI       string
+	Line      int
 	Character int
 	Package   string
+	Scope 	  string
 }
 
 type GoplsClient struct {
@@ -150,14 +151,29 @@ func ResolveNames(fset *token.FileSet, files map[string]*ast.File, rootDir strin
 		absPath, err := filepath.Abs(path)
 		if err != nil {
 			fmt.Printf("failed to get absolute path for %s: %v\n", path, err)
+			continue
 		}
 		uri := "file://" + filepath.ToSlash(absPath)
 
-		// fmt.Printf("Processing file: %s (URI: %s)\n", path, uri)
+		var scopeStack []string
 
 		ast.Inspect(file, func(n ast.Node) bool {
-			var ident *ast.Ident
+			switch node := n.(type) {
+			case *ast.FuncDecl:
+				scopeStack = append(scopeStack, "func "+node.Name.Name)
+			case *ast.TypeSpec:
+				switch node.Type.(type) {
+				case *ast.StructType:
+					scopeStack = append(scopeStack, "struct "+node.Name.Name)
+				case *ast.InterfaceType:
+					scopeStack = append(scopeStack, "interface "+node.Name.Name)
+				default:
+					scopeStack = append(scopeStack, "type "+node.Name.Name)
+				}
+			}
 
+			// Resolve identifier
+			var ident *ast.Ident
 			switch node := n.(type) {
 			case *ast.Ident:
 				ident = node
@@ -171,18 +187,33 @@ func ResolveNames(fset *token.FileSet, files map[string]*ast.File, rootDir strin
 				}
 			}
 
-			if ident == nil {
-				return true
+			if ident != nil {
+				pos := fset.Position(ident.Pos())
+				info, err := client.Definition(uri, pos.Line-1, pos.Column-1)
+				if err == nil && info != nil {
+					info.Name = ident.Name
+					info.Package = file.Name.Name
+
+					if len(scopeStack) > 0 {
+						info.Scope = scopeStack[len(scopeStack)-1] // top of stack
+					} else {
+						info.Scope = "global"
+					}
+
+					resolved[ident.Pos()] = info
+				}
 			}
 
-			pos := fset.Position(ident.Pos())
+			return true
+		})
 
-			// You might need to convert column from bytes to runes here if non-ASCII exists.
-			info, err := client.Definition(uri, pos.Line-1, pos.Column-1)
-			if err == nil && info != nil {
-				info.Name = ident.Name
-				info.Package = file.Name.Name
-				resolved[ident.Pos()] = info
+		// Use defer-like post-order to pop scope
+		ast.Inspect(file, func(n ast.Node) bool {
+			switch n.(type) {
+			case *ast.FuncDecl, *ast.TypeSpec:
+				if len(scopeStack) > 0 {
+					scopeStack = scopeStack[:len(scopeStack)-1]
+				}
 			}
 			return true
 		})

@@ -114,6 +114,7 @@ func TrackUsages(name string, resolvedNames map[token.Pos]*DefinitionInfo, usage
 					Column: position.Column,
 				},
 				Path: position.Filename,
+				Scope: obj.Scope,
 			}
 
 			// Append the usage position to the map for this name
