@@ -20,7 +20,7 @@ type JSONNode struct {
 	Methods   []string `json:"methods,omitempty"`
 	Variables []string `json:"variables,omitempty"`
 	Position  Position `json:"position"`
-	Usages    []Position `json:"usages,omitempty"`
+	Usages    []Usage `json:"usages,omitempty"`
 }
 
 type Position struct {
@@ -41,6 +41,11 @@ type PackageNode struct {
 	Name    string      `json:"name"`
 	Path    string      `json:"path"`
 	File   	FileNode  	`json:"file"`
+}
+
+type Usage struct {
+	Position Position `json:"position"`
+	Path     string   `json:"path"`
 }
 
 // Parses a whole package (only the .go files) into a FileSet
@@ -102,7 +107,7 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 		}
 
 		// Map to track where variables, functions, etc. are used
-		usageMap := make(map[string][]Position)
+		usageMap := make(map[string][]Usage)
 
 		ast.Inspect(file, func(n ast.Node) bool {
 			if n == nil {

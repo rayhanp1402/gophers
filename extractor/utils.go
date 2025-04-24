@@ -101,29 +101,32 @@ func getIdentNames(idents []*ast.Ident) []string {
 }
 
 // Helper function to track where the name is used
-func TrackUsages(name string, resolvedNames map[token.Pos]*DefinitionInfo, usageMap map[string][]Position, fset *token.FileSet) {
+func TrackUsages(name string, resolvedNames map[token.Pos]*DefinitionInfo, usageMap map[string][]Usage, fset *token.FileSet) {
 	for pos, obj := range resolvedNames {
 		if obj.Name == name {
 			// Get the position of the symbol's declaration
 			position := fset.Position(pos)
 
-			// Convert the token.Pos to the Position struct (line and column)
-			usagePosition := Position{
-				Line:   position.Line,
-				Column: position.Column,
+			// Convert the token.Pos to the Position struct (line and column), and then put it inside a Usage object
+			usagePosition := Usage{
+				Position: Position{
+					Line:   position.Line,
+					Column: position.Column,
+				},
+				Path: position.Filename,
 			}
 
 			// Append the usage position to the map for this name
 			if usages, exists := usageMap[name]; exists {
 				usageMap[name] = append(usages, usagePosition)
 			} else {
-				usageMap[name] = []Position{usagePosition}
+				usageMap[name] = []Usage{usagePosition}
 			}
 		}
 	}
 }
 
-func AppendUsages(nodes []JSONNode, usageMap map[string][]Position) {
+func AppendUsages(nodes []JSONNode, usageMap map[string][]Usage) {
 	for i := range nodes {
 		node := &nodes[i]
 		if usages, found := usageMap[node.Name]; found {
