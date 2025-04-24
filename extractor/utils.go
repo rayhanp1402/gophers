@@ -122,3 +122,12 @@ func TrackUsages(name string, resolvedNames map[token.Pos]*DefinitionInfo, usage
 		}
 	}
 }
+
+func AppendUsages(nodes []JSONNode, usageMap map[string][]Position) {
+	for i := range nodes {
+		node := &nodes[i]
+		if usages, found := usageMap[node.Name]; found {
+			node.Usages = usages
+		}
+	}
+}

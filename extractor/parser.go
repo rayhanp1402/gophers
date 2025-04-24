@@ -211,12 +211,11 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 			return true
 		})
 
-		for idx := range fileNode.Functions {
-			node := &fileNode.Functions[idx]
-			if usages, found := usageMap[node.Name]; found {
-				node.Usages = usages
-			}
-		}
+		AppendUsages(fileNode.Functions, usageMap)
+		AppendUsages(fileNode.Methods, usageMap)
+		AppendUsages(fileNode.Variables, usageMap)
+		AppendUsages(fileNode.Structs, usageMap)
+		AppendUsages(fileNode.Interfaces, usageMap)
 
 		packageNode := PackageNode{
 			Name:  packageName,
