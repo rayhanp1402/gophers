@@ -79,6 +79,14 @@ func ParsePackage(dir string) (*token.FileSet, map[string]*ast.File, error) {
 func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath string, packageName string, dir string) error {
 	var packageNodes []PackageNode
 
+	// Get resolved names
+	resolvedNames, err := ResolveNames(fset, files, dir)
+	if err != nil {
+		return err
+	}
+
+	// fmt.Printf("Resolved names: %+v\n", resolvedNames)
+
 	absPath, err := filepath.Abs(dir)
 	if err != nil {
 		return err
@@ -100,34 +108,66 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 			switch x := n.(type) {
 			case *ast.FuncDecl:
 				if x.Recv == nil {
-					fileNode.Functions = append(fileNode.Functions, JSONNode{
+					// Function node
+					funcNode := JSONNode{
 						Type:     "Function",
 						Name:     x.Name.Name,
 						Params:   extractParamTypes(x.Type.Params),
 						Returns:  extractParamTypes(x.Type.Results),
 						Receiver: "",
 						Position: position,
-					})
+					}
+			
+					// Add resolved name if available
+					if defInfo, ok := resolvedNames[x.Name.Pos()]; ok {
+						funcNode.Name = defInfo.Name
+					}
+			
+					fileNode.Functions = append(fileNode.Functions, funcNode)
 				} else {
-					fileNode.Methods = append(fileNode.Methods, JSONNode{
+					// Method node
+					var receiverName string
+					if starExpr, ok := x.Recv.List[0].Type.(*ast.StarExpr); ok {
+						// If receiver is a pointer type, extract the underlying type (dereference)
+						receiverName = extractType(starExpr.X)
+					} else {
+						// Handle regular (non-pointer) type receiver
+						receiverName = x.Recv.List[0].Type.(*ast.Ident).Name
+					}
+			
+					methodNode := JSONNode{
 						Type:     "Method",
 						Name:     x.Name.Name,
 						Params:   extractParamTypes(x.Type.Params),
 						Returns:  extractParamTypes(x.Type.Results),
-						Receiver: x.Recv.List[0].Type.(*ast.Ident).Name,
+						Receiver: receiverName,
 						Position: position,
-					})
+					}
+			
+					// Add resolved name if available
+					if defInfo, ok := resolvedNames[x.Name.Pos()]; ok {
+						methodNode.Name = defInfo.Name
+					}
+			
+					fileNode.Methods = append(fileNode.Methods, methodNode)
 				}
 			case *ast.GenDecl:
 				for _, spec := range x.Specs {
 					switch s := spec.(type) {
 					case *ast.ValueSpec:
 						for _, name := range s.Names {
-							fileNode.Variables = append(fileNode.Variables, JSONNode{
+							variableNode := JSONNode{
 								Type:     "Variable",
 								Name:     name.Name,
 								Position: position,
-							})
+							}
+
+							// Add resolved name if available
+							if defInfo, ok := resolvedNames[name.Pos()]; ok {
+								variableNode.Name = defInfo.Name
+							}
+
+							fileNode.Variables = append(fileNode.Variables, variableNode)
 						}
 					case *ast.TypeSpec:
 						if t, ok := s.Type.(*ast.StructType); ok {
@@ -165,7 +205,7 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 		packageNode := PackageNode{
 			Name:  packageName,
 			Path:  absPath,
-			Files: append([]FileNode{fileNode}),
+			Files: []FileNode{fileNode},
 		}
 
 		packageNodes = append(packageNodes, packageNode)
