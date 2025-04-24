@@ -40,7 +40,7 @@ type FileNode struct {
 type PackageNode struct {
 	Name    string      `json:"name"`
 	Path    string      `json:"path"`
-	Files   []FileNode  `json:"files"`
+	File   	FileNode  	`json:"file"`
 }
 
 // Parses a whole package (only the .go files) into a FileSet
@@ -77,7 +77,7 @@ func ParsePackage(dir string) (*token.FileSet, map[string]*ast.File, error) {
 }
 
 // Traverse and extract relevant data into the custom JSON format
-func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath string, packageName string, dir string, resolvedNames map[token.Pos]*DefinitionInfo) error {
+func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath string, packageName string, dir string, resolvedNames map[token.Pos]*DefinitionInfo, baseName string) error {
 	var packageNodes []PackageNode
 
 	// fmt.Printf("Resolved names: %+v\n", resolvedNames)
@@ -98,7 +98,7 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 
 	for _, file := range files {
 		fileNode := FileNode{
-			Filename: file.Name.Name,
+			Filename: baseName,
 		}
 
 		// Map to track where variables, functions, etc. are used
@@ -215,7 +215,7 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 		packageNode := PackageNode{
 			Name:  packageName,
 			Path:  fset.Position(file.Pos()).Filename,
-			Files: []FileNode{fileNode},
+			File:  fileNode,
 		}
 
 		packageNodes = append(packageNodes, packageNode)

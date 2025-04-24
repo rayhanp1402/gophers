@@ -47,10 +47,10 @@ func main() {
 
 		// Extract the filename (basename) for use of output file naming
 		baseName := filepath.Base(path)
-		astFileName := baseName[:len(baseName)-len(filepath.Ext(baseName))] + "_ast.json"
+		astFileName := baseName[:len(baseName)-len(filepath.Ext(baseName))] + ".json"
 		outputFilePath := filepath.Join(OUTPUT_DIRECTORY, astFileName)
 
-		err := extractor.ASTToJSON(fset, map[string]*ast.File{path: astFile}, outputFilePath, astFile.Name.Name, absPath, resolvedNames)
+		err := extractor.ASTToJSON(fset, map[string]*ast.File{path: astFile}, outputFilePath, astFile.Name.Name, absPath, resolvedNames, baseName)
 		if err != nil {
 			log.Printf("Error processing file %s: %v", path, err)
 		} else {
