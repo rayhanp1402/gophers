@@ -10,7 +10,7 @@ import (
 	"github.com/rayhanp1402/gophers/extractor"
 )
 
-const OUTPUT_DIRECTORY = "./out"
+const PARSED_METADATA_DIRECTORY = "./parsed_metadata"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -30,7 +30,7 @@ func main() {
 		log.Fatalf("Error parsing package: %v", err)
 	}
 
-	err = os.MkdirAll(OUTPUT_DIRECTORY, os.ModePerm)
+	err = os.MkdirAll(PARSED_METADATA_DIRECTORY, os.ModePerm)
 	if err != nil {
 		log.Fatalf("Error creating output directory: %v", err)
 	}
@@ -45,12 +45,34 @@ func main() {
 	for path, astFile := range files {
 		fmt.Println("File:", path)
 
-		// Extract the filename (basename) for use of output file naming
+		// Extract the filename (basename) for use of file metadata
 		baseName := filepath.Base(path)
-		astFileName := baseName[:len(baseName)-len(filepath.Ext(baseName))] + ".json"
-		outputFilePath := filepath.Join(OUTPUT_DIRECTORY, astFileName)
 
-		err := extractor.ASTToJSON(fset, map[string]*ast.File{path: astFile}, outputFilePath, astFile.Name.Name, absPath, resolvedNames, baseName)
+		// Get the relative path to preserve directory structure
+		absFilePath, err := filepath.Abs(path)
+		if err != nil {
+			log.Printf("Error getting absolute path for %s: %v", path, err)
+			continue
+		}
+
+		relPath, err := filepath.Rel(absPath, absFilePath)
+		if err != nil {
+			log.Printf("Error getting relative path for %s: %v", absFilePath, err)
+			continue
+		}
+
+		// Change extension to .json
+		jsonFileName := relPath[:len(relPath)-len(filepath.Ext(relPath))] + ".json"
+		outputFilePath := filepath.Join(PARSED_METADATA_DIRECTORY, jsonFileName)
+
+		// Ensure subdirectories are created
+		err = os.MkdirAll(filepath.Dir(outputFilePath), os.ModePerm)
+		if err != nil {
+			log.Printf("Error creating directory for %s: %v", outputFilePath, err)
+			continue
+		}
+
+		err = extractor.ASTToJSON(fset, map[string]*ast.File{path: astFile}, outputFilePath, astFile.Name.Name, absPath, resolvedNames, baseName)
 		if err != nil {
 			log.Printf("Error processing file %s: %v", path, err)
 		} else {
