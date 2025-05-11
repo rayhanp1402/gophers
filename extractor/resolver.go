@@ -31,7 +31,7 @@ func NewGoplsClient(rootPath string) (*GoplsClient, error) {
 		return nil, fmt.Errorf("failed to resolve absolute path: %w", err)
 	}
 
-	stdin, stdout, err := StartGopls(rootPath)
+	stdin, stdout, err := StartGopls(absPath)
 	if err != nil {
 		return nil, err
 	}
