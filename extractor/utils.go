@@ -167,3 +167,17 @@ func LoadMetadata(rootDir string) ([]PackageNode, error) {
 
     return allMetadata, err
 }
+
+func toNodeID(path string) string {
+	clean := strings.TrimSuffix(strings.ReplaceAll(path, "\\", "."), ".go")
+	return strings.TrimLeft(clean, ".")
+}
+
+func extractFunctionName(scope string) string {
+	// E.g., from "func main" → "main"
+	parts := strings.Fields(scope)
+	if len(parts) > 1 {
+		return parts[1]
+	}
+	return scope
+}
