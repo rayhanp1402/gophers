@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"go/ast"
 	"log"
@@ -79,4 +80,42 @@ func main() {
 			fmt.Printf("AST JSON successfully written for file %s\n", path)
 		}
 	}
+
+	pkgs, err := extractor.LoadMetadata(PARSED_METADATA_DIRECTORY)
+	if err != nil {
+		log.Fatalf("Error parsing metadata directory: %v", err)
+	}
+
+	nodes := extractor.GenerateNodes(pkgs)
+	edges := extractor.GenerateEdges(pkgs)
+
+	graph := extractor.Graph{
+		Elements: extractor.Elements{
+			Nodes: nodes,
+			Edges: edges,
+		},
+	}
+
+	// Write the Graph to "out" directory
+	outputDir := "./out"
+	outputFile := filepath.Join(outputDir, "graph.json")
+
+	err = os.MkdirAll(outputDir, os.ModePerm)
+	if err != nil {
+		log.Fatalf("Failed to create output directory: %v", err)
+	}
+
+	f, err := os.Create(outputFile)
+	if err != nil {
+		log.Fatalf("Failed to create output file: %v", err)
+	}
+	defer f.Close()
+
+	encoder := json.NewEncoder(f)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(graph); err != nil {
+		log.Fatalf("Failed to encode graph to JSON: %v", err)
+	}
+
+	fmt.Println("Graph written to:", outputFile)
 }

@@ -1,11 +1,14 @@
 package extractor
 
 import (
+	"encoding/json"
 	"fmt"
 	"go/ast"
 	"go/token"
+	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -134,4 +137,33 @@ func AppendUsages(nodes []JSONNode, usageMap map[string][]Usage) {
 			node.Usages = usages
 		}
 	}
+}
+
+func LoadMetadata(rootDir string) ([]PackageNode, error) {
+    var allMetadata []PackageNode
+
+    err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
+        if err != nil {
+            return err
+        }
+
+        if d.IsDir() || filepath.Ext(path) != ".json" {
+            return nil
+        }
+
+        data, err := os.ReadFile(path)
+        if err != nil {
+            return fmt.Errorf("reading file %s: %w", path, err)
+        }
+
+        var packages []PackageNode
+        if err := json.Unmarshal(data, &packages); err != nil {
+            return fmt.Errorf("parsing JSON %s: %w", path, err)
+        }
+
+        allMetadata = append(allMetadata, packages...)
+        return nil
+    })
+
+    return allMetadata, err
 }
