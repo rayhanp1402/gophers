@@ -130,6 +130,8 @@ func GenerateEdges(pkgs []PackageNode) []GraphEdge {
 	var edges []GraphEdge
 	counter := 1
 
+	seen := make(map[string]struct{})
+
 	skipGlobalScope := func(scope string) bool {
 		return extractFunctionName(scope) == "global"
 	}
@@ -138,37 +140,43 @@ func GenerateEdges(pkgs []PackageNode) []GraphEdge {
 		file := pkg.File
 		baseID := toNodeID(pkg.Path)
 
-		// Process function calls
+		// Helper to add edge if not already seen
+		addEdge := func(sourceID, targetID, label string) {
+			key := fmt.Sprintf("%s|%s|%s", sourceID, targetID, label)
+			if _, exists := seen[key]; exists {
+				return
+			}
+			seen[key] = struct{}{}
+			edges = append(edges, GraphEdge{
+				Data: EdgeData{
+					ID:         fmt.Sprintf("edge%d", counter),
+					Label:      label,
+					Source:     sourceID,
+					Target:     targetID,
+					Properties: map[string]string{},
+				},
+			})
+			counter++
+		}
+
+		// Function calls
 		for _, fn := range file.Functions {
 			targetID := baseID + "." + fn.Name
-
 			for _, usage := range fn.Usages {
 				if usage.Path == pkg.Path && extractFunctionName(usage.Scope) == fn.Name {
-					continue // skip declaration usage
+					continue
 				}
 				if skipGlobalScope(usage.Scope) {
-					continue // temporarily skip global scope
+					continue
 				}
-
 				sourceID := toNodeID(usage.Path) + "." + extractFunctionName(usage.Scope)
-
-				edges = append(edges, GraphEdge{
-					Data: EdgeData{
-						ID:     fmt.Sprintf("edge%d", counter),
-						Label:  "calls",
-						Source: sourceID,
-						Target: targetID,
-						Properties: map[string]string{},
-					},
-				})
-				counter++
+				addEdge(sourceID, targetID, "calls")
 			}
 		}
 
-		// Process variables with "holds" edges
+		// Variables
 		for _, variable := range file.Variables {
 			targetID := baseID + "." + variable.Name
-
 			for _, usage := range variable.Usages {
 				if usage.Path == pkg.Path && extractFunctionName(usage.Scope) == variable.Name {
 					continue
@@ -176,26 +184,14 @@ func GenerateEdges(pkgs []PackageNode) []GraphEdge {
 				if skipGlobalScope(usage.Scope) {
 					continue
 				}
-
 				sourceID := toNodeID(usage.Path) + "." + extractFunctionName(usage.Scope)
-
-				edges = append(edges, GraphEdge{
-					Data: EdgeData{
-						ID:     fmt.Sprintf("edge%d", counter),
-						Label:  "holds",
-						Source: sourceID,
-						Target: targetID,
-						Properties: map[string]string{},
-					},
-				})
-				counter++
+				addEdge(sourceID, targetID, "holds")
 			}
 		}
 
-		// Process structs with "holds" edges
+		// Structs
 		for _, strct := range file.Structs {
 			targetID := baseID + "." + strct.Name
-
 			for _, usage := range strct.Usages {
 				if usage.Path == pkg.Path && extractFunctionName(usage.Scope) == strct.Name {
 					continue
@@ -203,26 +199,14 @@ func GenerateEdges(pkgs []PackageNode) []GraphEdge {
 				if skipGlobalScope(usage.Scope) {
 					continue
 				}
-
 				sourceID := toNodeID(usage.Path) + "." + extractFunctionName(usage.Scope)
-
-				edges = append(edges, GraphEdge{
-					Data: EdgeData{
-						ID:     fmt.Sprintf("edge%d", counter),
-						Label:  "holds",
-						Source: sourceID,
-						Target: targetID,
-						Properties: map[string]string{},
-					},
-				})
-				counter++
+				addEdge(sourceID, targetID, "holds")
 			}
 		}
 
-		// Process interfaces with "holds" edges
+		// Interfaces
 		for _, iface := range file.Interfaces {
 			targetID := baseID + "." + iface.Name
-
 			for _, usage := range iface.Usages {
 				if usage.Path == pkg.Path && extractFunctionName(usage.Scope) == iface.Name {
 					continue
@@ -230,24 +214,14 @@ func GenerateEdges(pkgs []PackageNode) []GraphEdge {
 				if skipGlobalScope(usage.Scope) {
 					continue
 				}
-
 				sourceID := toNodeID(usage.Path) + "." + extractFunctionName(usage.Scope)
-
-				edges = append(edges, GraphEdge{
-					Data: EdgeData{
-						ID:     fmt.Sprintf("edge%d", counter),
-						Label:  "holds",
-						Source: sourceID,
-						Target: targetID,
-						Properties: map[string]string{},
-					},
-				})
-				counter++
+				addEdge(sourceID, targetID, "holds")
 			}
 		}
 	}
 
 	return edges
 }
+
 
 
