@@ -2,6 +2,7 @@ package extractor
 
 import (
 	"fmt"
+	"path/filepath"
 )
 
 type Graph struct {
@@ -39,9 +40,45 @@ func GenerateNodes(pkgs []PackageNode) []GraphNode {
 	var nodes []GraphNode
 	idCounter := 1
 
+	packageSeen := make(map[string]bool)
 	for _, pkg := range pkgs {
 		file := pkg.File
 		baseID := toNodeID(pkg.Path)
+
+		folderPath := filepath.ToSlash(filepath.Dir(pkg.Path)) // normalize to forward slashes
+
+		// Handle root folder case, set folderPath to empty string if "."
+		if folderPath == "." {
+			folderPath = ""
+		}
+
+		var packageID string
+		var qualifiedName string
+
+		if folderPath == "" {
+			packageID = toNodeID(pkg.Name)
+			qualifiedName = pkg.Name
+		} else {
+			packageID = toNodeID(folderPath + "." + pkg.Name)
+			qualifiedName = folderPath + "." + pkg.Name
+		}
+
+		// Only add the package node once per unique packageID
+		if !packageSeen[packageID] {
+			pkgNode := GraphNode{
+				Data: NodeData{
+					ID:     packageID,
+					Labels: []string{"Scope"},
+					Properties: map[string]string{
+						"simpleName"   : pkg.Name,
+						"qualifiedName": qualifiedName,
+						"kind"         : "package",
+					},
+				},
+			}
+			nodes = append(nodes, pkgNode)
+			packageSeen[packageID] = true
+		}
 
 		// Add structs
 		for _, s := range file.Structs {
@@ -162,6 +199,31 @@ func GenerateEdges(pkgs []PackageNode) []GraphEdge {
 				},
 			})
 			counter++
+		}
+
+		// Compute packageID like in GenerateNodes
+		folderPath := filepath.ToSlash(filepath.Dir(pkg.Path))
+		if folderPath == "." {
+			folderPath = ""
+		}
+
+		var packageID string
+		if folderPath == "" {
+			packageID = toNodeID(pkg.Name)
+		} else {
+			packageID = toNodeID(folderPath + "." + pkg.Name)
+		}
+
+		// Add edges from package node to struct nodes
+		for _, s := range file.Structs {
+			typeNodeID := baseID + "." + s.Name
+			addEdge(packageID, typeNodeID, "encloses")
+		}
+
+		// Add edges from package node to interface nodes
+		for _, iface := range file.Interfaces {
+			typeNodeID := baseID + "." + iface.Name
+			addEdge(packageID, typeNodeID, "encloses")
 		}
 
 		// Function calls
