@@ -48,10 +48,11 @@ func GenerateNodes(pkgs []PackageNode) []GraphNode {
 			node := GraphNode{
 				Data: NodeData{
 					ID:     baseID + "." + s.Name,
-					Labels: []string{"Structure"},
+					Labels: []string{"Type"},
 					Properties: map[string]string{
-						"simpleName": s.Name,
-						"kind":       "struct",
+						"simpleName"   : s.Name,
+						"qualifiedName": baseID + "." + s.Name,
+						"kind"		   : "struct",
 					},
 				},
 			}
@@ -64,10 +65,11 @@ func GenerateNodes(pkgs []PackageNode) []GraphNode {
 			node := GraphNode{
 				Data: NodeData{
 					ID:     baseID + "." + iface.Name,
-					Labels: []string{"Structure"},
+					Labels: []string{"Type"},
 					Properties: map[string]string{
-						"simpleName": iface.Name,
-						"kind":       "interface",
+						"simpleName"   : iface.Name,
+						"qualifiedName": baseID + "." + iface.Name,
+						"kind"		   : "interface",
 					},
 				},
 			}
@@ -80,10 +82,11 @@ func GenerateNodes(pkgs []PackageNode) []GraphNode {
 			node := GraphNode{
 				Data: NodeData{
 					ID:     baseID + "." + fn.Name,
-					Labels: []string{"Structure"},
+					Labels: []string{"Operation"},
 					Properties: map[string]string{
-						"simpleName": fn.Name,
-						"kind":       "function",
+						"simpleName"   : fn.Name,
+						"qualifiedName": baseID + "." + fn.Name,
+						"kind"		   : "function",
 					},
 				},
 			}
@@ -96,10 +99,11 @@ func GenerateNodes(pkgs []PackageNode) []GraphNode {
 			node := GraphNode{
 				Data: NodeData{
 					ID:     baseID + "." + m.Name,
-					Labels: []string{"Structure"},
+					Labels: []string{"Operation"},
 					Properties: map[string]string{
-						"simpleName": m.Name,
-						"kind":       "function",
+						"simpleName"   : m.Name,
+						"qualifiedName": baseID + "." + m.Name,
+						"kind"		   : "method",
 					},
 				},
 			}
@@ -112,10 +116,11 @@ func GenerateNodes(pkgs []PackageNode) []GraphNode {
 			node := GraphNode{
 				Data: NodeData{
 					ID:     baseID + "." + v.Name,
-					Labels: []string{"Structure"},
+					Labels: []string{"Variable"},
 					Properties: map[string]string{
-						"simpleName": v.Name,
-						"kind":       "variable",
+						"simpleName"   : v.Name,
+						"qualifiedName": baseID + "." + v.Name,
+						"kind"		   : "variable",
 					},
 				},
 			}
