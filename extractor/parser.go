@@ -43,6 +43,11 @@ type PackageNode struct {
 	File   	FileNode  	`json:"file"`
 }
 
+type ProjectNode struct {
+	Name     string        `json:"name"`
+	Packages []PackageNode `json:"packages"`
+}
+
 type Usage struct {
 	Position Position `json:"position"`
 	Path     string   `json:"path"`
@@ -84,23 +89,9 @@ func ParsePackage(dir string) (*token.FileSet, map[string]*ast.File, error) {
 
 // Traverse and extract relevant data into the custom JSON format
 func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath string, packageName string, dir string, resolvedNames map[token.Pos]*DefinitionInfo, baseName string) error {
-	var packageNodes []PackageNode
-
-	// fmt.Printf("Resolved names: %+v\n", resolvedNames)
-
-	// for pos, obj := range resolvedNames {
-	// 	if obj == nil {
-	// 		continue
-	// 	}
-	// 	position := fset.Position(pos)
-	// 	fmt.Printf("%d: %s (in %s:%d:%d)\n",
-	// 		pos,
-	// 		obj.Name,           // identifier name
-	// 		position.Filename,
-	// 		position.Line,
-	// 		position.Column,
-	// 	)
-	// }
+	projectNode := ProjectNode{
+		Name: filepath.Base(dir), // e.g., name of the folder as the project name
+	}
 
 	for _, file := range files {
 		fileNode := FileNode{
@@ -224,10 +215,10 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 			File:  fileNode,
 		}
 
-		packageNodes = append(packageNodes, packageNode)
+		projectNode.Packages = append(projectNode.Packages, packageNode)
 	}
 
-	jsonData, err := json.MarshalIndent(packageNodes, "", "  ")
+	jsonData, err := json.MarshalIndent(projectNode, "", "  ")
 	if err != nil {
 		return err
 	}

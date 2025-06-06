@@ -139,8 +139,8 @@ func AppendUsages(nodes []JSONNode, usageMap map[string][]Usage) {
 	}
 }
 
-func LoadMetadata(rootDir string) ([]PackageNode, error) {
-    var allMetadata []PackageNode
+func LoadMetadata(rootDir string) ([]ProjectNode, error) {
+    var allProjects []ProjectNode
 
     err := filepath.WalkDir(rootDir, func(path string, d fs.DirEntry, err error) error {
         if err != nil {
@@ -156,16 +156,16 @@ func LoadMetadata(rootDir string) ([]PackageNode, error) {
             return fmt.Errorf("reading file %s: %w", path, err)
         }
 
-        var packages []PackageNode
-        if err := json.Unmarshal(data, &packages); err != nil {
+        var project ProjectNode
+        if err := json.Unmarshal(data, &project); err != nil {
             return fmt.Errorf("parsing JSON %s: %w", path, err)
         }
 
-        allMetadata = append(allMetadata, packages...)
+        allProjects = append(allProjects, project)
         return nil
     })
 
-    return allMetadata, err
+    return allProjects, err
 }
 
 func toNodeID(path string) string {

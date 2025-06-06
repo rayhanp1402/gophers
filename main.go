@@ -81,13 +81,13 @@ func main() {
 		}
 	}
 
-	pkgs, err := extractor.LoadMetadata(PARSED_METADATA_DIRECTORY)
+	projects, err := extractor.LoadMetadata(PARSED_METADATA_DIRECTORY)
 	if err != nil {
 		log.Fatalf("Error parsing metadata directory: %v", err)
 	}
 
-	nodes := extractor.GenerateNodes(pkgs)
-	edges := extractor.GenerateEdges(pkgs)
+	nodes := extractor.GenerateNodes(projects)
+	edges := extractor.GenerateEdges(projects)
 
 	graph := extractor.Graph{
 		Elements: extractor.Elements{
