@@ -80,6 +80,40 @@ func GenerateNodes(pkgs []PackageNode) []GraphNode {
 			packageSeen[packageID] = true
 		}
 
+		// Add folder node
+		folderID := toNodeID(folderPath)
+		if folderPath != "" && !packageSeen[folderID] {
+			nodes = append(nodes, GraphNode{
+				Data: NodeData{
+					ID:     folderID,
+					Labels: []string{"Folder"},
+					Properties: map[string]string{
+						"simpleName":    filepath.Base(folderPath),
+						"qualifiedName": folderPath,
+						"kind":          "folder",
+					},
+				},
+			})
+			packageSeen[folderID] = true
+		}
+
+		// Add file node
+		fileID := toNodeID(pkg.Path)
+		if !packageSeen[fileID] {
+			nodes = append(nodes, GraphNode{
+				Data: NodeData{
+					ID:     fileID,
+					Labels: []string{"File"},
+					Properties: map[string]string{
+						"simpleName":    filepath.Base(pkg.Path),
+						"qualifiedName": pkg.Path,
+						"kind":          "file",
+					},
+				},
+			})
+			packageSeen[fileID] = true
+		}
+
 		// Add structs
 		for _, s := range file.Structs {
 			node := GraphNode{
@@ -213,6 +247,14 @@ func GenerateEdges(pkgs []PackageNode) []GraphEdge {
 		} else {
 			packageID = toNodeID(folderPath + "." + pkg.Name)
 		}
+
+		// Add edge: file declares scope (package)
+		fileID := toNodeID(pkg.Path)
+		addEdge(fileID, packageID, "declares")
+
+		// Add edge: folder contains file
+		folderID := toNodeID(folderPath)
+		addEdge(folderID, fileID, "contains")
 
 		// Add edges from package node to struct nodes
 		for _, s := range file.Structs {
