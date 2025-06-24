@@ -14,7 +14,7 @@ import (
 const PARSED_METADATA_DIRECTORY = "./parsed_metadata"
 
 func main() {
-	if len(os.Args) < 2 {
+	if len(os.Args) != 2 {
 		fmt.Println("Usage: go run main.go <directory>")
 		os.Exit(1)
 	}

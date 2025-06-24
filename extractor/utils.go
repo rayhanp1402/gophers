@@ -181,3 +181,25 @@ func extractFunctionName(scope string) string {
 	}
 	return scope
 }
+
+func LogResolved(resolved map[token.Pos]*DefinitionInfo, fset *token.FileSet) {
+    file, err := os.Create("./out/resolved.txt")
+    if err != nil {
+        fmt.Println("Error creating log file:", err)
+        return
+    }
+    defer file.Close()
+
+    for pos, def := range resolved {
+        position := fset.Position(pos)
+
+        fmt.Fprintf(file, "Identifier: %s\n", def.Name)
+        fmt.Fprintf(file, "  Used at: %s (line %d, column %d)\n", position.Filename, position.Line, position.Column)
+        fmt.Fprintf(file, "  Defined at: %s (line %d, char %d)\n", def.URI, def.Line+1, def.Character+1)
+        fmt.Fprintf(file, "  Package: %s\n", def.Package)
+        fmt.Fprintf(file, "  Scope: %s\n", def.Scope)
+        fmt.Fprintln(file, "-----------------------------")
+    }
+
+    fmt.Println("Resolved information written to resolved.txt")
+}

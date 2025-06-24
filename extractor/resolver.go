@@ -219,5 +219,6 @@ func ResolveNames(fset *token.FileSet, files map[string]*ast.File, rootDir strin
 		})
 	}
 
+	LogResolved(resolved, fset)
 	return resolved, nil
 }
