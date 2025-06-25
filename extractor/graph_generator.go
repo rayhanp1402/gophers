@@ -278,6 +278,7 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 
 	allVariableIDs := make(map[string]struct{})
 	globalVars := make(map[string]struct{})
+	declToFile := make(map[string]string) // Map from identifier ID to file path
 
 	skipGlobalScope := func(scope string) bool {
 		return extractFunctionName(scope) == "global"
@@ -351,16 +352,19 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 			addEdge(fileID, packageID, "declares")
 			for _, fn := range file.Functions {
 				fnID := baseID + "." + fn.Name
+				declToFile[fnID] = pkg.Path
 				addEdge(fileID, fnID, "declares")
 			}
 			for _, m := range file.Methods {
 				mID := baseID + "." + m.Name
+				declToFile[mID] = pkg.Path
 				addEdge(fileID, mID, "declares")
 			}
 
 			for _, v := range file.Variables {
 				varID := baseID + "." + v.Name
 				allVariableIDs[varID] = struct{}{}
+				declToFile[varID] = pkg.Path
 
 				if v.Position.Column == 1 {
 					globalVars[varID] = struct{}{}
@@ -421,14 +425,13 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 				structIDs[baseID+"."+s.Name] = struct{}{}
 			}
 			for _, v := range file.Variables {
-			if typ, ok := v.Params["type"]; ok {
-				typeID := baseID + "." + typ
-
-				if _, isStruct := structIDs[typeID]; isStruct {
-					addEdge(baseID+"."+v.Name, typeID, "typed")
+				if typ, ok := v.Params["type"]; ok {
+					typeID := baseID + "." + typ
+					if _, isStruct := structIDs[typeID]; isStruct {
+						addEdge(baseID+"."+v.Name, typeID, "typed")
+					}
 				}
 			}
-		}
 
 			for _, fn := range file.Functions {
 				for param := range fn.Params {
@@ -450,6 +453,14 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 					if _, isVar := allVariableIDs[targetID]; isVar {
 						if targetID != opID {
 							addEdge(opID, targetID, "uses")
+
+							sourceFileID := toNodeID(pkg.Path)
+							if targetPath, ok := declToFile[targetID]; ok {
+								targetFileID := toNodeID(targetPath)
+								if sourceFileID != targetFileID {
+									addEdge(sourceFileID, targetFileID, "requires")
+								}
+							}
 						}
 					}
 				}
@@ -469,31 +480,37 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 			}
 
 			for _, v := range file.Variables {
-			varID := baseID + "." + v.Name
+				varID := baseID + "." + v.Name
+				for _, usage := range v.Usages {
+					if skipGlobalScope(usage.Scope) {
+						continue
+					}
 
-			for _, usage := range v.Usages {
-				if skipGlobalScope(usage.Scope) {
-					continue
+					userID := toNodeID(pkg.Path) + "." + extractFunctionName(usage.Scope)
+					if userID == varID {
+						fmt.Println("❌ Skipping self-edge")
+						continue
+					}
+
+					addEdge(userID, varID, "uses")
+
+					sourceFileID := toNodeID(pkg.Path)
+					if targetPath, ok := declToFile[varID]; ok {
+						targetFileID := toNodeID(targetPath)
+						if sourceFileID != targetFileID {
+							addEdge(sourceFileID, targetFileID, "requires")
+						}
+					}
 				}
 
-				userID := toNodeID(pkg.Path) + "." + extractFunctionName(usage.Scope)
-
-				if userID == varID {
-					fmt.Println("❌ Skipping self-edge")
-					continue
+				if _, isGlobal := globalVars[varID]; !isGlobal && len(v.Usages) == 0 {
+					declaringFunc := toNodeID(pkg.Path) + "." + extractFunctionName(v.Scope)
+					if declaringFunc != varID {
+						addEdge(declaringFunc, varID, "uses")
+					}
 				}
-
-				addEdge(userID, varID, "uses")
 			}
 
-			// Ensure declaration counts as a use for locals
-			if _, isGlobal := globalVars[varID]; !isGlobal && len(v.Usages) == 0 {
-				declaringFunc := toNodeID(pkg.Path) + "." + extractFunctionName(v.Scope)
-				if declaringFunc != varID {
-					addEdge(declaringFunc, varID, "uses")
-				}
-			}
-		}
 			interfaceMethods := make(map[string]struct{})
 			for _, iface := range file.Interfaces {
 				for _, method := range iface.Methods {
@@ -511,9 +528,16 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 					if _, isIfaceMethod := interfaceMethods[opID]; isIfaceMethod {
 						continue
 					}
-
 					if callerID != opID {
 						addEdge(callerID, opID, "invokes")
+
+						sourceFileID := toNodeID(usage.Path)
+						if targetPath, ok := declToFile[opID]; ok {
+							targetFileID := toNodeID(targetPath)
+							if sourceFileID != targetFileID {
+								addEdge(sourceFileID, targetFileID, "requires")
+							}
+						}
 					}
 				}
 			}
