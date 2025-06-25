@@ -221,8 +221,10 @@ func GenerateNodes(projects []ProjectNode) []GraphNode {
 func GenerateEdges(projects []ProjectNode) []GraphEdge {
 	var edges []GraphEdge
 	counter := 1
-
 	seen := make(map[string]struct{})
+
+	// To ensure only variable "uses" edges are created
+	variableSet := make(map[string]struct{})
 
 	skipGlobalScope := func(scope string) bool {
 		return extractFunctionName(scope) == "global"
@@ -246,10 +248,19 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 		counter++
 	}
 
+	// Build set of known variable IDs first
+	for _, project := range projects {
+		for _, pkg := range project.Packages {
+			baseID := toNodeID(pkg.Path)
+			for _, v := range pkg.File.Variables {
+				varID := baseID + "." + v.Name
+				variableSet[varID] = struct{}{}
+			}
+		}
+	}
+
 	for _, project := range projects {
 		projectID := toNodeID(project.Name)
-
-		// Track root-level directories and files for "includes" edges
 		rootDirs := make(map[string]struct{})
 		rootFiles := make(map[string]struct{})
 
@@ -272,106 +283,164 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 			fileID := toNodeID(pkg.Path)
 			folderID := toNodeID(folderPath)
 
-			// Build set of root-level directories and files (for "includes")
+			// Project includes
 			if folderPath == "" {
-				// Root-level file
 				rootFiles[pkg.Path] = struct{}{}
 			} else {
-				// Root-level directory (folderPath itself is root dir)
 				rootDirs[folderPath] = struct{}{}
 			}
+			for dir := range rootDirs {
+				addEdge(projectID, toNodeID(dir), "includes")
+			}
+			for file := range rootFiles {
+				addEdge(projectID, toNodeID(file), "includes")
+			}
 
-			// Edge: package declared in file
+			// Folder contains
+			if folderPath != "" {
+				parent := filepath.ToSlash(filepath.Dir(folderPath))
+				if parent == "." {
+					parent = ""
+				}
+				if parent != "" {
+					addEdge(toNodeID(parent), folderID, "contains")
+				}
+				addEdge(folderID, fileID, "contains")
+			}
+
+			// File declares
 			addEdge(fileID, packageID, "declares")
-
-			// Edge: folder contains file
-			addEdge(folderID, fileID, "contains")
-
-			// Structs & Interfaces edges
-			for _, s := range file.Structs {
-				typeNodeID := baseID + "." + s.Name
-				addEdge(packageID, typeNodeID, "encloses")
-			}
-
-			for _, iface := range file.Interfaces {
-				typeNodeID := baseID + "." + iface.Name
-				addEdge(packageID, typeNodeID, "encloses")
-			}
-
-			// Function calls
 			for _, fn := range file.Functions {
-				targetID := baseID + "." + fn.Name
-				for _, usage := range fn.Usages {
-					if usage.Path == pkg.Path && extractFunctionName(usage.Scope) == fn.Name {
-						continue
-					}
-					if skipGlobalScope(usage.Scope) {
-						continue
-					}
-					sourceID := toNodeID(usage.Path) + "." + extractFunctionName(usage.Scope)
-					addEdge(sourceID, targetID, "calls")
+				fnID := baseID + "." + fn.Name
+				addEdge(fileID, fnID, "declares")
+			}
+			for _, m := range file.Methods {
+				mID := baseID + "." + m.Name
+				addEdge(fileID, mID, "declares")
+			}
+			for _, v := range file.Variables {
+				vID := baseID + "." + v.Name
+				addEdge(fileID, vID, "declares")
+			}
+
+			// Scope encloses types
+			for _, s := range file.Structs {
+				addEdge(packageID, baseID+"."+s.Name, "encloses")
+			}
+			for _, i := range file.Interfaces {
+				addEdge(packageID, baseID+"."+i.Name, "encloses")
+			}
+
+			// Operation instantiates type
+			for _, m := range file.Methods {
+				if m.Receiver != "" {
+					addEdge(baseID+"."+m.Name, baseID+"."+m.Receiver, "instantiates")
 				}
 			}
 
-			// Variables usages
-			for _, variable := range file.Variables {
-				targetID := baseID + "." + variable.Name
-				for _, usage := range variable.Usages {
-					if usage.Path == pkg.Path && extractFunctionName(usage.Scope) == variable.Name {
-						continue
+			// Operation returns Type
+			for _, fn := range file.Functions {
+				fnID := baseID + "." + fn.Name
+				for _, retType := range fn.Returns {
+					if retType != "" {
+						typeID := baseID + "." + retType
+						addEdge(fnID, typeID, "returns")
 					}
-					if skipGlobalScope(usage.Scope) {
-						continue
+				}
+			}
+			for _, m := range file.Methods {
+				mID := baseID + "." + m.Name
+				for _, retType := range m.Returns {
+					if retType != "" {
+						typeID := baseID + "." + retType
+						addEdge(mID, typeID, "returns")
 					}
-					sourceID := toNodeID(usage.Path) + "." + extractFunctionName(usage.Scope)
-					addEdge(sourceID, targetID, "holds")
 				}
 			}
 
-			// Struct usages
-			for _, strct := range file.Structs {
-				targetID := baseID + "." + strct.Name
-				for _, usage := range strct.Usages {
-					if usage.Path == pkg.Path && extractFunctionName(usage.Scope) == strct.Name {
-						continue
-					}
-					if skipGlobalScope(usage.Scope) {
-						continue
-					}
-					sourceID := toNodeID(usage.Path) + "." + extractFunctionName(usage.Scope)
-					addEdge(sourceID, targetID, "holds")
-				}
-			}
-
-			// Interface usages
+			// Type encapsulates operation
 			for _, iface := range file.Interfaces {
-				targetID := baseID + "." + iface.Name
-				for _, usage := range iface.Usages {
-					if usage.Path == pkg.Path && extractFunctionName(usage.Scope) == iface.Name {
-						continue
-					}
+				typeID := baseID + "." + iface.Name
+				for _, methodName := range iface.Methods {
+					methodID := baseID + "." + methodName
+					addEdge(typeID, methodID, "encapsulates")
+				}
+			}
+
+			// Type encapsulates variable
+			for _, s := range file.Structs {
+				for _, field := range s.Fields {
+					addEdge(baseID+"."+s.Name, baseID+"."+field, "encapsulates")
+				}
+			}
+
+			// Variable typed type
+			for _, v := range file.Variables {
+				if typ, ok := v.Params["type"]; ok {
+					addEdge(baseID+"."+v.Name, baseID+"."+typ, "typed")
+				}
+			}
+
+			// Variable parameterizes operation
+			for _, fn := range file.Functions {
+				for param := range fn.Params {
+					addEdge(baseID+"."+param, baseID+"."+fn.Name, "parameterizes")
+				}
+			}
+			for _, m := range file.Methods {
+				for param := range m.Params {
+					addEdge(baseID+"."+param, baseID+"."+m.Name, "parameterizes")
+				}
+			}
+
+			// Operation uses variable (but NOT operation)
+			processUsages := func(opID string, usages []Usage) {
+				for _, usage := range usages {
 					if skipGlobalScope(usage.Scope) {
 						continue
 					}
-					sourceID := toNodeID(usage.Path) + "." + extractFunctionName(usage.Scope)
-					addEdge(sourceID, targetID, "holds")
+					targetID := toNodeID(usage.Path) + "." + extractFunctionName(usage.Scope)
+					if targetID == opID {
+						continue // skip self-usage
+					}
+					if _, isVar := variableSet[targetID]; isVar {
+						addEdge(opID, targetID, "uses")
+					}
+				}
+			}
+
+			for _, fn := range file.Functions {
+				fnID := baseID + "." + fn.Name
+				processUsages(fnID, fn.Usages)
+			}
+			for _, m := range file.Methods {
+				mID := baseID + "." + m.Name
+				processUsages(mID, m.Usages)
+			}
+
+			// Operation invokes operation
+			processInvokes := func(opID string, usages []Usage) {
+			for _, usage := range usages {
+				if skipGlobalScope(usage.Scope) {
+					continue
+				}
+				callerID := toNodeID(usage.Path) + "." + extractFunctionName(usage.Scope)
+				if callerID != opID {
+					addEdge(callerID, opID, "invokes")
 				}
 			}
 		}
 
-		// Add includes edges from project to root-level directories
-		for dir := range rootDirs {
-			dirID := toNodeID(dir)
-			addEdge(projectID, dirID, "includes")
-		}
-
-		// Add includes edges from project to root-level files
-		for file := range rootFiles {
-			fileID := toNodeID(file)
-			addEdge(projectID, fileID, "includes")
+			for _, fn := range file.Functions {
+				fnID := baseID + "." + fn.Name
+				processInvokes(fnID, fn.Usages)
+			}
+			for _, m := range file.Methods {
+				mID := baseID + "." + m.Name
+				processInvokes(mID, m.Usages)
+			}
 		}
 	}
 
 	return edges
 }
-
