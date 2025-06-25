@@ -494,6 +494,12 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 				}
 			}
 		}
+			interfaceMethods := make(map[string]struct{})
+			for _, iface := range file.Interfaces {
+				for _, method := range iface.Methods {
+					interfaceMethods[baseID+"."+method] = struct{}{}
+				}
+			}
 
 			processInvokes := func(opID string, usages []Usage) {
 				for _, usage := range usages {
@@ -501,6 +507,11 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 						continue
 					}
 					callerID := toNodeID(usage.Path) + "." + extractFunctionName(usage.Scope)
+
+					if _, isIfaceMethod := interfaceMethods[opID]; isIfaceMethod {
+						continue
+					}
+
 					if callerID != opID {
 						addEdge(callerID, opID, "invokes")
 					}
