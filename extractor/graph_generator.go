@@ -223,8 +223,8 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 	counter := 1
 	seen := make(map[string]struct{})
 
-	// To ensure only variable "uses" edges are created
-	variableSet := make(map[string]struct{})
+	allVariableIDs := make(map[string]struct{})
+	globalVars := make(map[string]struct{})
 
 	skipGlobalScope := func(scope string) bool {
 		return extractFunctionName(scope) == "global"
@@ -246,17 +246,6 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 			},
 		})
 		counter++
-	}
-
-	// Build set of known variable IDs first
-	for _, project := range projects {
-		for _, pkg := range project.Packages {
-			baseID := toNodeID(pkg.Path)
-			for _, v := range pkg.File.Variables {
-				varID := baseID + "." + v.Name
-				variableSet[varID] = struct{}{}
-			}
-		}
 	}
 
 	for _, project := range projects {
@@ -283,7 +272,6 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 			fileID := toNodeID(pkg.Path)
 			folderID := toNodeID(folderPath)
 
-			// Project includes
 			if folderPath == "" {
 				rootFiles[pkg.Path] = struct{}{}
 			} else {
@@ -296,7 +284,6 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 				addEdge(projectID, toNodeID(file), "includes")
 			}
 
-			// Folder contains
 			if folderPath != "" {
 				parent := filepath.ToSlash(filepath.Dir(folderPath))
 				if parent == "." {
@@ -308,7 +295,6 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 				addEdge(folderID, fileID, "contains")
 			}
 
-			// File declares
 			addEdge(fileID, packageID, "declares")
 			for _, fn := range file.Functions {
 				fnID := baseID + "." + fn.Name
@@ -318,12 +304,17 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 				mID := baseID + "." + m.Name
 				addEdge(fileID, mID, "declares")
 			}
+
 			for _, v := range file.Variables {
-				vID := baseID + "." + v.Name
-				addEdge(fileID, vID, "declares")
+				varID := baseID + "." + v.Name
+				allVariableIDs[varID] = struct{}{}
+
+				if v.Position.Column == 1 {
+					globalVars[varID] = struct{}{}
+					addEdge(fileID, varID, "declares")
+				}
 			}
 
-			// Scope encloses types
 			for _, s := range file.Structs {
 				addEdge(packageID, baseID+"."+s.Name, "encloses")
 			}
@@ -331,14 +322,12 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 				addEdge(packageID, baseID+"."+i.Name, "encloses")
 			}
 
-			// Operation instantiates type
 			for _, m := range file.Methods {
 				if m.Receiver != "" {
 					addEdge(baseID+"."+m.Name, baseID+"."+m.Receiver, "instantiates")
 				}
 			}
 
-			// Operation returns Type
 			for _, fn := range file.Functions {
 				fnID := baseID + "." + fn.Name
 				for _, retType := range fn.Returns {
@@ -358,7 +347,6 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 				}
 			}
 
-			// Type encapsulates operation
 			for _, iface := range file.Interfaces {
 				typeID := baseID + "." + iface.Name
 				for _, methodName := range iface.Methods {
@@ -367,21 +355,18 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 				}
 			}
 
-			// Type encapsulates variable
 			for _, s := range file.Structs {
 				for _, field := range s.Fields {
 					addEdge(baseID+"."+s.Name, baseID+"."+field, "encapsulates")
 				}
 			}
 
-			// Variable typed type
 			for _, v := range file.Variables {
 				if typ, ok := v.Params["type"]; ok {
 					addEdge(baseID+"."+v.Name, baseID+"."+typ, "typed")
 				}
 			}
 
-			// Variable parameterizes operation
 			for _, fn := range file.Functions {
 				for param := range fn.Params {
 					addEdge(baseID+"."+param, baseID+"."+fn.Name, "parameterizes")
@@ -393,43 +378,61 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 				}
 			}
 
-			// Operation uses variable (but NOT operation)
-			processUsages := func(opID string, usages []Usage) {
+			processUsages := func(opID string, usages []Usage, targetName string) {
 				for _, usage := range usages {
 					if skipGlobalScope(usage.Scope) {
 						continue
 					}
-					targetID := toNodeID(usage.Path) + "." + extractFunctionName(usage.Scope)
-					if targetID == opID {
-						continue // skip self-usage
-					}
-					if _, isVar := variableSet[targetID]; isVar {
-						addEdge(opID, targetID, "uses")
+					targetID := toNodeID(usage.Path) + "." + targetName
+					if _, isVar := allVariableIDs[targetID]; isVar {
+						if targetID != opID {
+							addEdge(opID, targetID, "uses")
+						}
 					}
 				}
 			}
 
 			for _, fn := range file.Functions {
 				fnID := baseID + "." + fn.Name
-				processUsages(fnID, fn.Usages)
+				for _, usage := range fn.Usages {
+					processUsages(fnID, []Usage{usage}, usage.Scope)
+				}
 			}
 			for _, m := range file.Methods {
 				mID := baseID + "." + m.Name
-				processUsages(mID, m.Usages)
+				for _, usage := range m.Usages {
+					processUsages(mID, []Usage{usage}, usage.Scope)
+				}
 			}
-
-			// Operation invokes operation
-			processInvokes := func(opID string, usages []Usage) {
-			for _, usage := range usages {
+			for _, v := range file.Variables {
+			varID := baseID + "." + v.Name
+			for _, usage := range v.Usages {
 				if skipGlobalScope(usage.Scope) {
 					continue
 				}
-				callerID := toNodeID(usage.Path) + "." + extractFunctionName(usage.Scope)
-				if callerID != opID {
-					addEdge(callerID, opID, "invokes")
+				// who is using this variable?
+				userID := toNodeID(usage.Path) + "." + extractFunctionName(usage.Scope)
+
+				// avoid self edge
+				if userID == varID {
+					continue
 				}
+
+				addEdge(userID, varID, "uses")
 			}
 		}
+
+			processInvokes := func(opID string, usages []Usage) {
+				for _, usage := range usages {
+					if skipGlobalScope(usage.Scope) {
+						continue
+					}
+					callerID := toNodeID(usage.Path) + "." + extractFunctionName(usage.Scope)
+					if callerID != opID {
+						addEdge(callerID, opID, "invokes")
+					}
+				}
+			}
 
 			for _, fn := range file.Functions {
 				fnID := baseID + "." + fn.Name

@@ -88,9 +88,17 @@ func ParsePackage(dir string) (*token.FileSet, map[string]*ast.File, error) {
 }
 
 // Traverse and extract relevant data into the custom JSON format
-func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath string, packageName string, dir string, resolvedNames map[token.Pos]*DefinitionInfo, baseName string) error {
+func ASTToJSON(
+	fset *token.FileSet,
+	files map[string]*ast.File,
+	outputPath string,
+	packageName string,
+	dir string,
+	resolvedNames map[token.Pos]*DefinitionInfo,
+	baseName string,
+) error {
 	projectNode := ProjectNode{
-		Name: filepath.Base(dir), // e.g., name of the folder as the project name
+		Name: filepath.Base(dir),
 	}
 
 	for _, file := range files {
@@ -98,8 +106,8 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 			Filename: baseName,
 		}
 
-		// Map to track where variables, functions, etc. are used
 		usageMap := make(map[string][]Usage)
+		localVars := map[string][]JSONNode{}
 
 		ast.Inspect(file, func(n ast.Node) bool {
 			if n == nil {
@@ -111,64 +119,90 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 
 			switch x := n.(type) {
 			case *ast.FuncDecl:
-				if x.Recv == nil {
-					// Function node
-					funcNode := JSONNode{
-						Type:     "Function",
-						Name:     x.Name.Name,
-						Params:   extractParamTypes(x.Type.Params),
-						Returns:  extractParamTypes(x.Type.Results),
-						Receiver: "",
-						Position: position,
-					}
+				funcName := x.Name.Name
+				scope := "func " + funcName
 
-					TrackUsages(x.Name.Name, resolvedNames, usageMap, fset)
-			
-					fileNode.Functions = append(fileNode.Functions, funcNode)
-				} else {
-					// Method node
-					var receiverName string
-					if starExpr, ok := x.Recv.List[0].Type.(*ast.StarExpr); ok {
-						// If receiver is a pointer type, extract the underlying type (dereference)
-						receiverName = extractType(starExpr.X)
-					} else {
-						// Handle regular (non-pointer) type receiver
-						receiverName = x.Recv.List[0].Type.(*ast.Ident).Name
-					}
-			
-					methodNode := JSONNode{
-						Type:     "Method",
-						Name:     x.Name.Name,
-						Params:   extractParamTypes(x.Type.Params),
-						Returns:  extractParamTypes(x.Type.Results),
-						Receiver: receiverName,
-						Position: position,
-					}
-
-					TrackUsages(x.Name.Name, resolvedNames, usageMap, fset)
-			
-					fileNode.Methods = append(fileNode.Methods, methodNode)
+				node := JSONNode{
+					Type:     "Function",
+					Name:     funcName,
+					Params:   extractParamTypes(x.Type.Params),
+					Returns:  extractParamTypes(x.Type.Results),
+					Receiver: "",
+					Position: position,
 				}
+
+				if x.Recv != nil {
+					// It's a method
+					node.Type = "Method"
+					if starExpr, ok := x.Recv.List[0].Type.(*ast.StarExpr); ok {
+						node.Receiver = extractType(starExpr.X)
+					} else if ident, ok := x.Recv.List[0].Type.(*ast.Ident); ok {
+						node.Receiver = ident.Name
+					}
+					fileNode.Methods = append(fileNode.Methods, node)
+				} else {
+					// It's a plain function
+					fileNode.Functions = append(fileNode.Functions, node)
+				}
+
+				TrackUsages(funcName, resolvedNames, usageMap, fset)
+
+				// Extract local variables from the function body
+				ast.Inspect(x.Body, func(bn ast.Node) bool {
+					switch stmt := bn.(type) {
+					case *ast.AssignStmt:
+						if stmt.Tok == token.DEFINE {
+							for _, lhs := range stmt.Lhs {
+								if ident, ok := lhs.(*ast.Ident); ok {
+									declPos := fset.Position(ident.Pos())
+									localVar := JSONNode{
+										Type:     "Variable",
+										Name:     ident.Name,
+										Position: Position{Line: declPos.Line, Column: declPos.Column},
+									}
+									localVars[scope] = append(localVars[scope], localVar)
+								}
+							}
+						}
+					case *ast.DeclStmt:
+						if gen, ok := stmt.Decl.(*ast.GenDecl); ok {
+							for _, spec := range gen.Specs {
+								if vs, ok := spec.(*ast.ValueSpec); ok {
+									for _, ident := range vs.Names {
+										declPos := fset.Position(ident.Pos())
+										localVar := JSONNode{
+											Type:     "Variable",
+											Name:     ident.Name,
+											Position: Position{Line: declPos.Line, Column: declPos.Column},
+										}
+										localVars[scope] = append(localVars[scope], localVar)
+									}
+								}
+							}
+						}
+					}
+					return true
+				})
+
 			case *ast.GenDecl:
 				for _, spec := range x.Specs {
 					switch s := spec.(type) {
 					case *ast.ValueSpec:
 						for _, name := range s.Names {
-							variableNode := JSONNode{
+							varNode := JSONNode{
 								Type:     "Variable",
 								Name:     name.Name,
 								Position: position,
 							}
-
+							fileNode.Variables = append(fileNode.Variables, varNode)
 							TrackUsages(name.Name, resolvedNames, usageMap, fset)
-
-							fileNode.Variables = append(fileNode.Variables, variableNode)
 						}
 					case *ast.TypeSpec:
-						if t, ok := s.Type.(*ast.StructType); ok {
+						switch t := s.Type.(type) {
+						case *ast.StructType:
 							structNode := JSONNode{
-								Type:    "Struct",
-								Name:    s.Name.Name,
+								Type:     "Struct",
+								Name:     s.Name.Name,
 								Position: position,
 							}
 							for _, field := range t.Fields.List {
@@ -176,32 +210,36 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 									structNode.Fields = append(structNode.Fields, name.Name)
 								}
 							}
-
-							TrackUsages(s.Name.Name, resolvedNames, usageMap, fset)
-							
 							fileNode.Structs = append(fileNode.Structs, structNode)
-						} else if t, ok := s.Type.(*ast.InterfaceType); ok {
-							interfaceNode := JSONNode{
-								Type:    "Interface",
-								Name:    s.Name.Name,
+							TrackUsages(s.Name.Name, resolvedNames, usageMap, fset)
+
+						case *ast.InterfaceType:
+							ifaceNode := JSONNode{
+								Type:     "Interface",
+								Name:     s.Name.Name,
 								Position: position,
 							}
 							for _, method := range t.Methods.List {
 								for _, name := range method.Names {
-									interfaceNode.Methods = append(interfaceNode.Methods, name.Name)
+									ifaceNode.Methods = append(ifaceNode.Methods, name.Name)
 								}
 							}
-
+							fileNode.Interfaces = append(fileNode.Interfaces, ifaceNode)
 							TrackUsages(s.Name.Name, resolvedNames, usageMap, fset)
-
-							fileNode.Interfaces = append(fileNode.Interfaces, interfaceNode)
 						}
 					}
 				}
 			}
-
 			return true
 		})
+
+		// Append collected local variables and their usage info
+		for scope, vars := range localVars {
+			for _, v := range vars {
+				fileNode.Variables = append(fileNode.Variables, v)
+				TrackUsages(v.Name, resolvedNames, usageMap, fset, scope)
+			}
+		}
 
 		AppendUsages(fileNode.Functions, usageMap)
 		AppendUsages(fileNode.Methods, usageMap)
@@ -210,11 +248,10 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 		AppendUsages(fileNode.Interfaces, usageMap)
 
 		packageNode := PackageNode{
-			Name:  packageName,
-			Path:  fset.Position(file.Pos()).Filename,
-			File:  fileNode,
+			Name: packageName,
+			Path: fset.Position(file.Pos()).Filename,
+			File: fileNode,
 		}
-
 		projectNode.Packages = append(projectNode.Packages, packageNode)
 	}
 
@@ -223,8 +260,7 @@ func ASTToJSON(fset *token.FileSet, files map[string]*ast.File, outputPath strin
 		return err
 	}
 
-	err = os.WriteFile(outputPath, jsonData, 0644)
-	if err != nil {
+	if err := os.WriteFile(outputPath, jsonData, 0644); err != nil {
 		return err
 	}
 

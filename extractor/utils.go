@@ -104,28 +104,23 @@ func getIdentNames(idents []*ast.Ident) []string {
 }
 
 // Helper function to track where the name is used
-func TrackUsages(name string, resolvedNames map[token.Pos]*DefinitionInfo, usageMap map[string][]Usage, fset *token.FileSet) {
+func TrackUsages(name string, resolvedNames map[token.Pos]*DefinitionInfo, usageMap map[string][]Usage, fset *token.FileSet, expectedScope ...string) {
 	for pos, obj := range resolvedNames {
 		if obj.Name == name {
-			// Get the position of the symbol's declaration
-			position := fset.Position(pos)
+			if len(expectedScope) > 0 && obj.Scope != expectedScope[0] {
+				continue
+			}
 
-			// Convert the token.Pos to the Position struct (line and column), and then put it inside a Usage object
-			usagePosition := Usage{
+			position := fset.Position(pos)
+			usage := Usage{
 				Position: Position{
 					Line:   position.Line,
 					Column: position.Column,
 				},
-				Path: position.Filename,
+				Path:  position.Filename,
 				Scope: obj.Scope,
 			}
-
-			// Append the usage position to the map for this name
-			if usages, exists := usageMap[name]; exists {
-				usageMap[name] = append(usages, usagePosition)
-			} else {
-				usageMap[name] = []Usage{usagePosition}
-			}
+			usageMap[name] = append(usageMap[name], usage)
 		}
 	}
 }
