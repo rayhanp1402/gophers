@@ -148,6 +148,23 @@ func GenerateNodes(projects []ProjectNode) []GraphNode {
 				}
 				idCounter++
 				nodes = append(nodes, node)
+
+				// Add struct field nodes
+				for _, fieldName := range s.Fields {
+					fieldID := baseID + "." + s.Name + "." + fieldName
+					nodes = append(nodes, GraphNode{
+						Data: NodeData{
+							ID:     fieldID,
+							Labels: []string{"Variable"},
+							Properties: map[string]string{
+								"simpleName":    fieldName,
+								"qualifiedName": fieldID,
+								"kind":          "field",
+								"struct":        s.Name,
+							},
+						},
+					})
+				}
 			}
 
 			for _, iface := range file.Interfaces {
@@ -180,6 +197,24 @@ func GenerateNodes(projects []ProjectNode) []GraphNode {
 				}
 				idCounter++
 				nodes = append(nodes, node)
+
+				// Add parameter nodes
+				for paramName, typeName := range fn.Params {
+					paramID := baseID + "." + paramName
+					nodes = append(nodes, GraphNode{
+						Data: NodeData{
+							ID:     paramID,
+							Labels: []string{"Variable"},
+							Properties: map[string]string{
+								"simpleName":    paramName,
+								"qualifiedName": paramID,
+								"kind":          "variable",
+								"type":          typeName,
+								"function":      fn.Name,
+							},
+						},
+					})
+				}
 			}
 
 			for _, m := range file.Methods {
@@ -196,6 +231,24 @@ func GenerateNodes(projects []ProjectNode) []GraphNode {
 				}
 				idCounter++
 				nodes = append(nodes, node)
+
+				// Add parameter nodes
+				for paramName, typeName := range m.Params {
+					paramID := baseID + "." + paramName
+					nodes = append(nodes, GraphNode{
+						Data: NodeData{
+							ID:     paramID,
+							Labels: []string{"Variable"},
+							Properties: map[string]string{
+								"simpleName":    paramName,
+								"qualifiedName": paramID,
+								"kind":          "variable",
+								"type":          typeName,
+								"function":      m.Name,
+							},
+						},
+					})
+				}
 			}
 
 			for _, v := range file.Variables {
@@ -357,7 +410,9 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 
 			for _, s := range file.Structs {
 				for _, field := range s.Fields {
-					addEdge(baseID+"."+s.Name, baseID+"."+field, "encapsulates")
+					fieldID := baseID + "." + s.Name + "." + field
+					structID := baseID + "." + s.Name
+					addEdge(structID, fieldID, "encapsulates")
 				}
 			}
 
