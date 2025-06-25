@@ -416,11 +416,19 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 				}
 			}
 
+			structIDs := make(map[string]struct{})
+			for _, s := range file.Structs {
+				structIDs[baseID+"."+s.Name] = struct{}{}
+			}
 			for _, v := range file.Variables {
-				if typ, ok := v.Params["type"]; ok {
-					addEdge(baseID+"."+v.Name, baseID+"."+typ, "typed")
+			if typ, ok := v.Params["type"]; ok {
+				typeID := baseID + "." + typ
+
+				if _, isStruct := structIDs[typeID]; isStruct {
+					addEdge(baseID+"."+v.Name, typeID, "typed")
 				}
 			}
+		}
 
 			for _, fn := range file.Functions {
 				for param := range fn.Params {

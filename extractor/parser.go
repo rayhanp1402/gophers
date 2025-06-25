@@ -153,7 +153,7 @@ func ASTToJSON(
 					switch stmt := bn.(type) {
 					case *ast.AssignStmt:
 						if stmt.Tok == token.DEFINE {
-							for _, lhs := range stmt.Lhs {
+							for i, lhs := range stmt.Lhs {
 								if ident, ok := lhs.(*ast.Ident); ok {
 									declPos := fset.Position(ident.Pos())
 									localVar := JSONNode{
@@ -162,6 +162,17 @@ func ASTToJSON(
 										Position: Position{Line: declPos.Line, Column: declPos.Column},
 										Scope:    scope,
 									}
+
+									// Try to infer type from RHS expression
+									if i < len(stmt.Rhs) {
+										typeStr := extractType(stmt.Rhs[i])
+										if typeStr != "" {
+											localVar.Params = map[string]string{
+												"type": typeStr,
+											}
+										}
+									}
+
 									localVars[scope] = append(localVars[scope], localVar)
 								}
 							}
@@ -310,11 +321,14 @@ func extractType(expr ast.Expr) string {
 	case *ast.StarExpr:
 		return "*" + extractType(t.X)
 	case *ast.SelectorExpr:
-		// For imported types like `pkg.Type`
 		return extractType(t.X) + "." + t.Sel.Name
 	case *ast.MapType:
 		return "map[" + extractType(t.Key) + "]" + extractType(t.Value)
+	case *ast.CompositeLit:
+		return extractType(t.Type)
+	case *ast.IndexExpr:
+		return extractType(t.X)
 	default:
-		return fmt.Sprintf("%T", expr) // fallback
+		return fmt.Sprintf("%T", expr)
 	}
 }
