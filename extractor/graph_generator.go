@@ -404,21 +404,31 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 					processUsages(mID, []Usage{usage}, usage.Scope)
 				}
 			}
+
 			for _, v := range file.Variables {
 			varID := baseID + "." + v.Name
+
 			for _, usage := range v.Usages {
 				if skipGlobalScope(usage.Scope) {
 					continue
 				}
-				// who is using this variable?
-				userID := toNodeID(usage.Path) + "." + extractFunctionName(usage.Scope)
 
-				// avoid self edge
+				userID := toNodeID(pkg.Path) + "." + extractFunctionName(usage.Scope)
+
 				if userID == varID {
+					fmt.Println("❌ Skipping self-edge")
 					continue
 				}
 
 				addEdge(userID, varID, "uses")
+			}
+
+			// Ensure declaration counts as a use for locals
+			if _, isGlobal := globalVars[varID]; !isGlobal && len(v.Usages) == 0 {
+				declaringFunc := toNodeID(pkg.Path) + "." + extractFunctionName(v.Scope)
+				if declaringFunc != varID {
+					addEdge(declaringFunc, varID, "uses")
+				}
 			}
 		}
 

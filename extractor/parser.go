@@ -21,6 +21,7 @@ type JSONNode struct {
 	Variables []string `json:"variables,omitempty"`
 	Position  Position `json:"position"`
 	Usages    []Usage `json:"usages,omitempty"`
+	Scope     string            `json:"scope,omitempty"`
 }
 
 type Position struct {
@@ -159,6 +160,7 @@ func ASTToJSON(
 										Type:     "Variable",
 										Name:     ident.Name,
 										Position: Position{Line: declPos.Line, Column: declPos.Column},
+										Scope:    scope,
 									}
 									localVars[scope] = append(localVars[scope], localVar)
 								}
@@ -174,6 +176,7 @@ func ASTToJSON(
 											Type:     "Variable",
 											Name:     ident.Name,
 											Position: Position{Line: declPos.Line, Column: declPos.Column},
+											Scope:    scope,
 										}
 										localVars[scope] = append(localVars[scope], localVar)
 									}
@@ -233,11 +236,21 @@ func ASTToJSON(
 			return true
 		})
 
-		// Append collected local variables and their usage info
+		// Append collected local variables and register their declaration as a usage
 		for scope, vars := range localVars {
 			for _, v := range vars {
+				// Treat the declaration itself as a usage
+				usage := Usage{
+					Position: Position{
+						Line:   v.Position.Line,
+						Column: v.Position.Column,
+					},
+					Path:  baseName, // or use the actual file path if needed
+					Scope: scope,
+				}
+				usageMap[v.Name] = append(usageMap[v.Name], usage)
+
 				fileNode.Variables = append(fileNode.Variables, v)
-				TrackUsages(v.Name, resolvedNames, usageMap, fset, scope)
 			}
 		}
 
