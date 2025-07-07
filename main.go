@@ -127,18 +127,18 @@ func main() {
 		}
 	}
 
-	projects, err := extractor.LoadMetadata(PARSED_METADATA_DIRECTORY)
-	if err != nil {
-		log.Fatalf("Error parsing metadata directory: %v", err)
-	}
+	// projects, err := extractor.LoadMetadata(PARSED_METADATA_DIRECTORY)
+	// if err != nil {
+	// 	log.Fatalf("Error parsing metadata directory: %v", err)
+	// }
 
-	nodes := extractor.GenerateNodes(projects)
-	edges := extractor.GenerateEdges(projects)
+	nodes := extractor.GenerateNodesFromSymbolTable(symbolTable)
+	// edges := extractor.GenerateEdges(projects)
 
 	graph := extractor.Graph{
 		Elements: extractor.Elements{
 			Nodes: nodes,
-			Edges: edges,
+			// Edges: edges,
 		},
 	}
 

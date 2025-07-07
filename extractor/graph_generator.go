@@ -36,6 +36,48 @@ type EdgeData struct {
 	Properties map[string]string `json:"properties"`
 }
 
+func GenerateNodesFromSymbolTable(symbols map[string]*ModifiedDefinitionInfo) []GraphNode {
+	seen := make(map[string]bool)
+	var nodes []GraphNode
+
+	for _, def := range symbols {
+		id := toNodeID(fmt.Sprintf("%s:%d:%d", def.URI, def.Line, def.Character))
+
+		if seen[id] {
+			continue
+		}
+
+		nodes = append(nodes, GraphNode{
+			Data: NodeData{
+				ID:     id,
+				Labels: []string{kindToLabel(def.Kind)},
+				Properties: map[string]string{
+					"simpleName":    def.Name,
+					"qualifiedName": fmt.Sprintf("%s:%d:%d", def.URI, def.Line+1, def.Character+1),
+					"kind":          def.Kind,
+				},
+			},
+		})
+
+		seen[id] = true
+	}
+
+	return nodes
+}
+
+func kindToLabel(kind string) string {
+	switch kind {
+	case "struct", "interface", "type":
+		return "Type"
+	case "func", "method":
+		return "Operation"
+	case "var", "field", "variable":
+		return "Variable"
+	default:
+		return "Unknown"
+	}
+}
+
 func GenerateNodes(projects []ProjectNode) []GraphNode {
 	var nodes []GraphNode
 	idCounter := 1
