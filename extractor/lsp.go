@@ -47,6 +47,13 @@ func sendLSPMessage(w io.Writer, msg interface{}) {
 	fmt.Fprintf(w, "Content-Length: %d\r\n\r\n%s", len(data), data)
 }
 
+func (c *GoplsClient) Close() error {
+	if closer, ok := c.stdin.(io.Closer); ok {
+		return closer.Close()
+	}
+	return nil
+}
+
 func readLSPMessages(r io.Reader) {
 	scanner := bufio.NewScanner(r)
 	scanner.Split(splitLSP)

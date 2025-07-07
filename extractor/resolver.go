@@ -17,6 +17,7 @@ type SimplifiedASTNode struct {
 	Name     string            `json:"name,omitempty"`
 	Children []*SimplifiedASTNode `json:"children,omitempty"`
 	Position *ASTNodePosition     `json:"position,omitempty"`
+	DeclaredAt *ModifiedDefinitionInfo    `json:"declaredAt,omitempty"`
 }
 
 type ASTNodePosition struct {
@@ -46,6 +47,53 @@ type GoplsClient struct {
 	stdin  io.WriteCloser
 	stdout io.Reader
 	seq    int
+}
+
+func ResolveNameUsingGopls(client *GoplsClient, node *SimplifiedASTNode) (*ModifiedDefinitionInfo, error) {
+	if node.Position == nil {
+		return nil, fmt.Errorf("node has no position")
+	}
+
+	// Subtract 1 if your positions are 1-based (Go uses 0-based internally)
+	resp, err := client.ModifiedDefinition(
+		node.Position.URI,
+		node.Position.Line-1,
+		node.Position.Character-1,
+	)
+	if err != nil || resp == nil {
+		return nil, fmt.Errorf("definition not found: %v", err)
+	}
+
+	// Optional: fill the name from the node
+	resp.Name = node.Name
+
+	return resp, nil
+}
+
+func AnnotateASTWithDefinitions(ast *SimplifiedASTNode, client *GoplsClient) {
+	var walk func(node *SimplifiedASTNode)
+
+	walk = func(node *SimplifiedASTNode) {
+		if node == nil {
+			return
+		}
+
+		if node.Type == "Ident" && node.Name != "" && node.Position != nil {
+		def, err := ResolveNameUsingGopls(client, node)
+		if err == nil && def != nil {
+			node.DeclaredAt = def
+			fmt.Printf("✔ Resolved: %s -> %s:%d:%d\n", node.Name, def.URI, def.Line+1, def.Character+1)
+		} else {
+			fmt.Printf("✘ Failed to resolve: %s (%s:%d:%d)\n", node.Name, node.Position.URI, node.Position.Line, node.Position.Character)
+		}
+}
+
+		for _, child := range node.Children {
+			walk(child)
+		}
+	}
+
+	walk(ast)
 }
 
 func NewGoplsClient(rootPath string) (*GoplsClient, error) {
@@ -101,6 +149,62 @@ func NewGoplsClient(rootPath string) (*GoplsClient, error) {
 		stdin:  stdin,
 		stdout: stdout,
 		seq:    2, // next available ID
+	}, nil
+}
+
+func (c *GoplsClient) ModifiedDefinition(uri string, line, character int) (*ModifiedDefinitionInfo, error) {
+	req := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      c.seq,
+		"method":  "textDocument/definition",
+		"params": map[string]interface{}{
+			"textDocument": map[string]string{
+				"uri": uri,
+			},
+			"position": map[string]int{
+				"line":      line,
+				"character": character,
+			},
+		},
+	}
+	c.seq++
+
+	sendLSPMessage(c.stdin, req)
+
+	// Read response
+	scanner := bufio.NewScanner(c.stdout)
+	scanner.Split(splitLSP)
+	if !scanner.Scan() {
+		return nil, fmt.Errorf("no response from gopls")
+	}
+
+	var resp struct {
+		Result []struct {
+			URI   string `json:"uri"`
+			Range struct {
+				Start struct {
+					Line      int `json:"line"`
+					Character int `json:"character"`
+				} `json:"start"`
+			} `json:"range"`
+		} `json:"result"`
+	}
+
+	err := json.Unmarshal(scanner.Bytes(), &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(resp.Result) == 0 {
+		return nil, nil
+	}
+
+	loc := resp.Result[0]
+	return &ModifiedDefinitionInfo{
+		URI:       loc.URI,
+		Line:      loc.Range.Start.Line,
+		Character: loc.Range.Start.Character,
+		Kind:      "",
 	}, nil
 }
 
@@ -426,11 +530,12 @@ func BuildSimplifiedASTs(fset *token.FileSet, files map[string]*ast.File) map[st
 
 func newNode(kind, name string, fset *token.FileSet, path string, pos token.Pos) *SimplifiedASTNode {
 	position := fset.Position(pos)
+	absPath, _ := filepath.Abs(path)
 	return &SimplifiedASTNode{
 		Type: kind,
 		Name: name,
 		Position: &ASTNodePosition{
-			URI:       "file://" + filepath.ToSlash(path),
+			URI:       "file://" + filepath.ToSlash(absPath),
 			Line:      position.Line - 1,
 			Character: position.Column - 1,
 		},
@@ -441,7 +546,7 @@ func OutputSimplifiedASTs(fset *token.FileSet, files map[string]*ast.File, proje
 	asts := BuildSimplifiedASTs(fset, files)
 
 	for path, astNode := range asts {
-		absPath, err := filepath.Abs(path) // Ensure absolute path
+		absPath, err := filepath.Abs(path)
 		if err != nil {
 			return err
 		}
@@ -628,4 +733,48 @@ func collectSymbolsFromBlock(node *SimplifiedASTNode, table map[string]*Modified
 	for _, child := range node.Children {
 		collectSymbolsFromBlock(child, table)
 	}
+}
+
+func SaveSimplifiedAST(ast *SimplifiedASTNode, projectRoot, outputDir string) error {
+	if ast == nil || ast.Position == nil {
+		return fmt.Errorf("invalid AST node")
+	}
+
+	// Get the absolute path from URI
+	uri := ast.Position.URI
+	if !strings.HasPrefix(uri, "file://") {
+		return fmt.Errorf("invalid URI: %s", uri)
+	}
+	absPath := filepath.FromSlash(strings.TrimPrefix(uri, "file://"))
+
+	absPath, err := filepath.Abs(absPath)
+	if err != nil {
+		return fmt.Errorf("failed to resolve absolute path: %w", err)
+	}
+
+	// Derive relative path from project root
+	relPath, err := filepath.Rel(projectRoot, absPath)
+	if err != nil {
+		return fmt.Errorf("cannot get relative path from %s to %s: %w", projectRoot, absPath, err)
+	}
+
+	// Construct output path: replace extension with .simplified.json
+	jsonFileName := relPath[:len(relPath)-len(filepath.Ext(relPath))] + ".simplified.json"
+	outputPath := filepath.Join(outputDir, filepath.ToSlash(jsonFileName))
+
+	// Ensure the parent directory exists
+	if err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm); err != nil {
+		return err
+	}
+
+	// Write JSON file
+	f, err := os.Create(outputPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	encoder := json.NewEncoder(f)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(ast)
 }

@@ -58,7 +58,6 @@ func main() {
 
 	// Build symbol table from all files
 	symbolTable := make(map[string]*extractor.ModifiedDefinitionInfo)
-
 	for _, root := range simplifiedASTs {
 		fileSymbols := extractor.CollectSymbolTable(root)
 		for name, def := range fileSymbols {
@@ -69,6 +68,25 @@ func main() {
 	fmt.Println("Collected symbols:")
 	for name, def := range symbolTable {
 		fmt.Printf("- %s (%s) at %s:%d:%d\n", name, def.Kind, def.URI, def.Line+1, def.Character+1)
+	}
+
+	// Start gopls
+	client, err := extractor.NewGoplsClient(absPath)
+	if err != nil {
+		log.Fatalf("Failed to start gopls client: %v", err)
+	}
+	defer client.Close()
+
+	// Annotate each simplified AST
+	for _, root := range simplifiedASTs {
+		extractor.AnnotateASTWithDefinitions(root, client)
+	}
+
+	for _, root := range simplifiedASTs {
+		err := extractor.SaveSimplifiedAST(root, absPath, INTERMEDIATE_REPRESENTATION_DIRECTORY)
+		if err != nil {
+			log.Printf("Failed to save updated AST with declaration info: %v", err)
+		}
 	}
 
 	for path, astFile := range files {
