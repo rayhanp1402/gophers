@@ -12,6 +12,7 @@ import (
 )
 
 const PARSED_METADATA_DIRECTORY = "./parsed_metadata"
+const INTERMEDIATE_REPRESENTATION_DIRECTORY = "./intermediate_representation"
 
 func main() {
 	if len(os.Args) != 2 {
@@ -41,6 +42,33 @@ func main() {
 	resolvedNames, err := extractor.ResolveNames(fset, files, dir)
 	if err != nil {
 		return
+	}
+
+	err = extractor.OutputSimplifiedASTs(fset, files, absPath, INTERMEDIATE_REPRESENTATION_DIRECTORY)
+	if err != nil {
+		log.Fatalf("Error writing simplified ASTs: %v", err)
+	}
+	fmt.Println("Simplified ASTs written to:", INTERMEDIATE_REPRESENTATION_DIRECTORY)
+
+	// Load intermediate_representation directory
+	simplifiedASTs, err := extractor.LoadSimplifiedASTs(INTERMEDIATE_REPRESENTATION_DIRECTORY)
+	if err != nil {
+		log.Fatalf("Failed to load simplified ASTs: %v", err)
+	}
+
+	// Build symbol table from all files
+	symbolTable := make(map[string]*extractor.ModifiedDefinitionInfo)
+
+	for _, root := range simplifiedASTs {
+		fileSymbols := extractor.CollectSymbolTable(root)
+		for name, def := range fileSymbols {
+			symbolTable[name] = def
+		}
+	}
+
+	fmt.Println("Collected symbols:")
+	for name, def := range symbolTable {
+		fmt.Printf("- %s (%s) at %s:%d:%d\n", name, def.Kind, def.URI, def.Line+1, def.Character+1)
 	}
 
 	for path, astFile := range files {
