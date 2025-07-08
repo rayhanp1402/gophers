@@ -57,8 +57,8 @@ func ResolveNameUsingGopls(client *GoplsClient, node *SimplifiedASTNode) (*Modif
 	// Subtract 1 if your positions are 1-based (Go uses 0-based internally)
 	resp, err := client.ModifiedDefinition(
 		node.Position.URI,
-		node.Position.Line-1,
-		node.Position.Character-1,
+		node.Position.Line,
+		node.Position.Character,
 	)
 	if err != nil || resp == nil {
 		return nil, fmt.Errorf("definition not found: %v", err)
