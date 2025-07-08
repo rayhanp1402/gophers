@@ -91,6 +91,10 @@ func GenerateGraphNodes(sourceRoot string, files map[string]*ast.File, symbols m
 	}
 
 	for _, def := range symbols {
+		if def.Kind == "local" {
+			continue
+		}
+
 		id := toNodeID(fmt.Sprintf("%s:%d:%d", def.URI, def.Line, def.Character))
 		if seen[id] {
 			continue

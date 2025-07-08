@@ -790,14 +790,15 @@ func collectSymbolsFromBlock(node *SimplifiedASTNode, table map[string]*Modified
 		for _, stmt := range node.Children {
 			switch stmt.Type {
 			case "AssignStmt":
-				// Look for short variable declarations (:=)
+				// Short variable declarations (:=)
 				for _, lhs := range stmt.Children {
 					if lhs.Type == "Ident" {
-						table[lhs.Name] = &ModifiedDefinitionInfo{
-							Name: lhs.Name,
-							Kind: "var",
-							URI:  lhs.Position.URI,
-							Line: lhs.Position.Line,
+						key := fmt.Sprintf("%s:%d:%d", lhs.Position.URI, lhs.Position.Line, lhs.Position.Character)
+						table[key] = &ModifiedDefinitionInfo{
+							Name:      lhs.Name,
+							Kind:      "local", // Mark as local variable
+							URI:       lhs.Position.URI,
+							Line:      lhs.Position.Line,
 							Character: lhs.Position.Character,
 						}
 					}
@@ -809,11 +810,12 @@ func collectSymbolsFromBlock(node *SimplifiedASTNode, table map[string]*Modified
 							if spec.Type == "ValueSpec" {
 								for _, id := range spec.Children {
 									if id.Type == "Ident" {
-										table[id.Name] = &ModifiedDefinitionInfo{
-											Name: id.Name,
-											Kind: "var",
-											URI:  id.Position.URI,
-											Line: id.Position.Line,
+										key := fmt.Sprintf("%s:%d:%d", id.Position.URI, id.Position.Line, id.Position.Character)
+										table[key] = &ModifiedDefinitionInfo{
+											Name:      id.Name,
+											Kind:      "local",
+											URI:       id.Position.URI,
+											Line:      id.Position.Line,
 											Character: id.Position.Character,
 										}
 									}
@@ -826,7 +828,7 @@ func collectSymbolsFromBlock(node *SimplifiedASTNode, table map[string]*Modified
 		}
 	}
 
-	// Recurse into children
+	// Recurse into any nested blocks
 	for _, child := range node.Children {
 		collectSymbolsFromBlock(child, table)
 	}
