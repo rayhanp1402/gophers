@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type Graph struct {
@@ -38,7 +39,7 @@ type EdgeData struct {
 	Properties map[string]string `json:"properties"`
 }
 
-func GenerateGraphNodes(sourceRoot string, files map[string]*ast.File, symbols map[string]*ModifiedDefinitionInfo) ([]GraphNode, error) {
+func GenerateGraphNodes(sourceRoot string, files map[string]*ast.File, symbols map[string]*ModifiedDefinitionInfo, simplifiedASTs map[string]*SimplifiedASTNode) ([]GraphNode, error) {
 	nodes := []GraphNode{}
 	seen := map[string]bool{}
 
@@ -57,7 +58,7 @@ func GenerateGraphNodes(sourceRoot string, files map[string]*ast.File, symbols m
 						Labels: []string{"Folder"},
 						Properties: map[string]string{
 							"qualifiedName": normalizedPath,
-							"simpleName": filepath.Base(normalizedPath),
+							"simpleName":    filepath.Base(normalizedPath),
 						},
 					},
 				})
@@ -75,7 +76,7 @@ func GenerateGraphNodes(sourceRoot string, files map[string]*ast.File, symbols m
 						Labels: []string{"File"},
 						Properties: map[string]string{
 							"qualifiedName": normalizedPath,
-							"simpleName": filepath.Base(normalizedPath),
+							"simpleName":    filepath.Base(normalizedPath),
 						},
 					},
 				})
@@ -108,6 +109,33 @@ func GenerateGraphNodes(sourceRoot string, files map[string]*ast.File, symbols m
 		seen[id] = true
 	}
 
+	addedPackages := map[string]bool{}
+	for _, root := range simplifiedASTs {
+		for _, child := range root.Children {
+			if child.Type == "Package" && child.Name != "" {
+				pkgName := child.Name
+				pkgPath := filepath.ToSlash(strings.TrimPrefix(child.Position.URI, "file://"))
+				dir := filepath.Dir(pkgPath)
+				qualified := fmt.Sprintf("%s/%s", dir, pkgName)
+
+				id := toNodeID(qualified)
+				if !addedPackages[id] {
+					nodes = append(nodes, GraphNode{
+						Data: NodeData{
+							ID:     id + ".package",
+							Labels: []string{"Scope"},
+							Properties: map[string]string{
+								"qualifiedName": qualified + ".package",
+								"simpleName":    pkgName,
+							},
+						},
+					})
+					addedPackages[id] = true
+				}
+			}
+		}
+	}
+
 	return nodes, nil
 }
 
@@ -138,8 +166,11 @@ func GenerateGraphEdges(nodes []GraphNode) []GraphEdge {
 		parentDir := filepath.ToSlash(filepath.Dir(qname))
 		childID := node.Data.ID
 
-		// Skip if it doesn't have a valid parent
 		if parentDir == "" || parentDir == "." {
+			continue
+		}
+
+		if containsLabel(node.Data.Labels, "Scope") {
 			continue
 		}
 
@@ -168,6 +199,15 @@ func GenerateGraphEdges(nodes []GraphNode) []GraphEdge {
 	}
 
 	return edges
+}
+
+func containsLabel(labels []string, target string) bool {
+	for _, l := range labels {
+		if l == target {
+			return true
+		}
+	}
+	return false
 }
 
 func GenerateNodes(projects []ProjectNode) []GraphNode {
