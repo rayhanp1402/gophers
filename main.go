@@ -132,7 +132,10 @@ func main() {
 	// 	log.Fatalf("Error parsing metadata directory: %v", err)
 	// }
 
-	nodes := extractor.GenerateNodesFromSymbolTable(symbolTable)
+	nodes, err := extractor.GenerateGraphNodesFromSource(absPath, files, symbolTable)
+	if err != nil {
+		log.Fatalf("Failed to generate graph nodes: %v", err)
+	}
 	// edges := extractor.GenerateEdges(projects)
 
 	graph := extractor.Graph{

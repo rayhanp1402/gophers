@@ -2,6 +2,8 @@ package extractor
 
 import (
 	"fmt"
+	"go/ast"
+	"os"
 	"path/filepath"
 )
 
@@ -34,6 +36,79 @@ type EdgeData struct {
 	Source     string            `json:"source"`
 	Target     string            `json:"target"`
 	Properties map[string]string `json:"properties"`
+}
+
+func GenerateGraphNodesFromSource(sourceRoot string, files map[string]*ast.File, symbols map[string]*ModifiedDefinitionInfo) ([]GraphNode, error) {
+	nodes := []GraphNode{}
+	seen := map[string]bool{}
+
+	err := filepath.Walk(sourceRoot, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		normalizedPath := filepath.ToSlash(path)
+
+		if info.IsDir() {
+			id := toNodeID(normalizedPath)
+			if !seen[id] {
+				nodes = append(nodes, GraphNode{
+					Data: NodeData{
+						ID:     id,
+						Labels: []string{"Folder"},
+						Properties: map[string]string{
+							"qualifiedName": normalizedPath,
+							"simpleName": filepath.Base(normalizedPath),
+						},
+					},
+				})
+				seen[id] = true
+			}
+			return nil
+		}
+
+		if filepath.Ext(path) == ".go" {
+			id := toNodeID(normalizedPath + ".go")
+			if !seen[id] {
+				nodes = append(nodes, GraphNode{
+					Data: NodeData{
+						ID:     id,
+						Labels: []string{"File"},
+						Properties: map[string]string{
+							"qualifiedName": normalizedPath,
+							"simpleName": filepath.Base(normalizedPath),
+						},
+					},
+				})
+				seen[id] = true
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, def := range symbols {
+		id := toNodeID(fmt.Sprintf("%s:%d:%d", def.URI, def.Line, def.Character))
+		if seen[id] {
+			continue
+		}
+		nodes = append(nodes, GraphNode{
+			Data: NodeData{
+				ID:     id,
+				Labels: []string{kindToLabel(def.Kind)},
+				Properties: map[string]string{
+					"simpleName":    def.Name,
+					"qualifiedName": fmt.Sprintf("%s:%d:%d", def.URI, def.Line+1, def.Character+1),
+					"kind":          def.Kind,
+				},
+			},
+		})
+		seen[id] = true
+	}
+
+	return nodes, nil
 }
 
 func GenerateNodesFromSymbolTable(symbols map[string]*ModifiedDefinitionInfo) []GraphNode {
@@ -76,6 +151,60 @@ func kindToLabel(kind string) string {
 	default:
 		return "Unknown"
 	}
+}
+
+func GenerateFolderAndFileNodesFromIR(dir string) ([]GraphNode, error) {
+	var nodes []GraphNode
+	seen := make(map[string]bool)
+
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		normalizedPath := filepath.ToSlash(path)
+
+		if info.IsDir() {
+			if !seen[normalizedPath] {
+				nodes = append(nodes, GraphNode{
+					Data: NodeData{
+						ID:     toNodeID("dir:" + normalizedPath),
+						Labels: []string{"Folder"},
+						Properties: map[string]string{
+							"path": normalizedPath,
+							"name": filepath.Base(normalizedPath),
+						},
+					},
+				})
+				seen[normalizedPath] = true
+			}
+			return nil
+		}
+
+		if filepath.Ext(path) == ".json" {
+			if !seen[normalizedPath] {
+				nodes = append(nodes, GraphNode{
+					Data: NodeData{
+						ID:     toNodeID("file:" + normalizedPath),
+						Labels: []string{"File"},
+						Properties: map[string]string{
+							"path": normalizedPath,
+							"name": filepath.Base(normalizedPath),
+						},
+					},
+				})
+				seen[normalizedPath] = true
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return nodes, nil
 }
 
 func GenerateNodes(projects []ProjectNode) []GraphNode {
