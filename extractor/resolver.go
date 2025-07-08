@@ -441,6 +441,14 @@ func buildSimplifiedAST(fset *token.FileSet, node ast.Node, path string) *Simpli
 			}
 		}
 
+	case *ast.InterfaceType:
+		simp = newNode("InterfaceType", "", fset, path, n.Pos())
+		if n.Methods != nil {
+			for _, field := range n.Methods.List {
+				addChild(field)
+			}
+		}
+
 	case *ast.FieldList:
 		simp = newNode("FieldList", "", fset, path, n.Pos())
 		for _, field := range n.List {
@@ -642,8 +650,7 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 			}
 
 		case "TypeSpec":
-			if len(node.Children) > 0 {
-				child := node.Children[0]
+			for _, child := range node.Children {
 				switch child.Type {
 				case "StructType":
 					structKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
