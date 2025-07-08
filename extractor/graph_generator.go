@@ -38,7 +38,7 @@ type EdgeData struct {
 	Properties map[string]string `json:"properties"`
 }
 
-func GenerateGraphNodesFromSource(sourceRoot string, files map[string]*ast.File, symbols map[string]*ModifiedDefinitionInfo) ([]GraphNode, error) {
+func GenerateGraphNodes(sourceRoot string, files map[string]*ast.File, symbols map[string]*ModifiedDefinitionInfo) ([]GraphNode, error) {
 	nodes := []GraphNode{}
 	seen := map[string]bool{}
 
@@ -111,35 +111,6 @@ func GenerateGraphNodesFromSource(sourceRoot string, files map[string]*ast.File,
 	return nodes, nil
 }
 
-func GenerateNodesFromSymbolTable(symbols map[string]*ModifiedDefinitionInfo) []GraphNode {
-	seen := make(map[string]bool)
-	var nodes []GraphNode
-
-	for _, def := range symbols {
-		id := toNodeID(fmt.Sprintf("%s:%d:%d", def.URI, def.Line, def.Character))
-
-		if seen[id] {
-			continue
-		}
-
-		nodes = append(nodes, GraphNode{
-			Data: NodeData{
-				ID:     id,
-				Labels: []string{kindToLabel(def.Kind)},
-				Properties: map[string]string{
-					"simpleName":    def.Name,
-					"qualifiedName": fmt.Sprintf("%s:%d:%d", def.URI, def.Line+1, def.Character+1),
-					"kind":          def.Kind,
-				},
-			},
-		})
-
-		seen[id] = true
-	}
-
-	return nodes
-}
-
 func kindToLabel(kind string) string {
 	switch kind {
 	case "struct", "interface", "type":
@@ -153,58 +124,50 @@ func kindToLabel(kind string) string {
 	}
 }
 
-func GenerateFolderAndFileNodesFromIR(dir string) ([]GraphNode, error) {
-	var nodes []GraphNode
-	seen := make(map[string]bool)
-
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		normalizedPath := filepath.ToSlash(path)
-
-		if info.IsDir() {
-			if !seen[normalizedPath] {
-				nodes = append(nodes, GraphNode{
-					Data: NodeData{
-						ID:     toNodeID("dir:" + normalizedPath),
-						Labels: []string{"Folder"},
-						Properties: map[string]string{
-							"path": normalizedPath,
-							"name": filepath.Base(normalizedPath),
-						},
-					},
-				})
-				seen[normalizedPath] = true
-			}
-			return nil
-		}
-
-		if filepath.Ext(path) == ".json" {
-			if !seen[normalizedPath] {
-				nodes = append(nodes, GraphNode{
-					Data: NodeData{
-						ID:     toNodeID("file:" + normalizedPath),
-						Labels: []string{"File"},
-						Properties: map[string]string{
-							"path": normalizedPath,
-							"name": filepath.Base(normalizedPath),
-						},
-					},
-				})
-				seen[normalizedPath] = true
-			}
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
+func GenerateGraphEdges(nodes []GraphNode) []GraphEdge {
+	nodeMap := make(map[string]GraphNode)
+	for _, node := range nodes {
+		nodeMap[node.Data.ID] = node
 	}
 
-	return nodes, nil
+	var edges []GraphEdge
+	seen := make(map[string]bool)
+
+	for _, node := range nodes {
+		qname := node.Data.Properties["qualifiedName"]
+		parentDir := filepath.ToSlash(filepath.Dir(qname))
+		childID := node.Data.ID
+
+		// Skip if it doesn't have a valid parent
+		if parentDir == "" || parentDir == "." {
+			continue
+		}
+
+		parentID := toNodeID(parentDir)
+		if _, exists := nodeMap[parentID]; !exists {
+			continue
+		}
+
+		edgeID := fmt.Sprintf("%s->%s", parentID, childID)
+		if seen[edgeID] {
+			continue
+		}
+
+		edges = append(edges, GraphEdge{
+			Data: EdgeData{
+				ID:     edgeID,
+				Label:  "contains",
+				Source: parentID,
+				Target: childID,
+				Properties: map[string]string{
+					"type": "contains",
+				},
+			},
+		})
+		seen[edgeID] = true
+	}
+
+	return edges
 }
 
 func GenerateNodes(projects []ProjectNode) []GraphNode {
