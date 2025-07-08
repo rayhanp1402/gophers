@@ -49,24 +49,49 @@ type GoplsClient struct {
 	seq    int
 }
 
+func (c *GoplsClient) DidOpenFile(uri string) error {
+	localPath := strings.TrimPrefix(uri, "file://")
+	data, err := os.ReadFile(localPath)
+	if err != nil {
+		return fmt.Errorf("failed to read file: %w", err)
+	}
+
+	params := map[string]interface{}{
+		"textDocument": map[string]interface{}{
+			"uri":        uri,
+			"languageId": "go",
+			"version":    1,
+			"text":       string(data),
+		},
+	}
+
+	notif := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"method":  "textDocument/didOpen",
+		"params":  params,
+	}
+
+	sendLSPMessage(c.stdin, notif)
+	return nil
+}
+
 func ResolveNameUsingGopls(client *GoplsClient, node *SimplifiedASTNode) (*ModifiedDefinitionInfo, error) {
 	if node.Position == nil {
 		return nil, fmt.Errorf("node has no position")
 	}
 
-	// Subtract 1 if your positions are 1-based (Go uses 0-based internally)
+	// Try sending line and character exactly as they appear
 	resp, err := client.ModifiedDefinition(
 		node.Position.URI,
-		node.Position.Line,
-		node.Position.Character,
+		node.Position.Line,     // <-- NO subtraction
+		node.Position.Character, // <-- NO subtraction
 	)
 	if err != nil || resp == nil {
 		return nil, fmt.Errorf("definition not found: %v", err)
 	}
 
-	// Optional: fill the name from the node
+	// If the response looks off later, we can subtract again case-by-case
 	resp.Name = node.Name
-
 	return resp, nil
 }
 
@@ -107,10 +132,9 @@ func NewGoplsClient(rootPath string) (*GoplsClient, error) {
 		return nil, err
 	}
 
-	// Convert the rootPath to a file URI
 	uri := "file://" + filepath.ToSlash(absPath)
 
-	// Send initialize request
+	// Initialize
 	initReq := map[string]interface{}{
 		"jsonrpc": "2.0",
 		"id":      1,
@@ -129,15 +153,13 @@ func NewGoplsClient(rootPath string) (*GoplsClient, error) {
 	}
 	sendLSPMessage(stdin, initReq)
 
-	// Wait for initialize response
 	scanner := bufio.NewScanner(stdout)
 	scanner.Split(splitLSP)
 	if !scanner.Scan() {
 		return nil, fmt.Errorf("no response from gopls after initialize")
 	}
-	// fmt.Printf("Initialize response: %s\n", scanner.Bytes())
 
-	// Send initialized notification
+	// Send initialized
 	initNotif := map[string]interface{}{
 		"jsonrpc": "2.0",
 		"method":  "initialized",
@@ -145,11 +167,24 @@ func NewGoplsClient(rootPath string) (*GoplsClient, error) {
 	}
 	sendLSPMessage(stdin, initNotif)
 
-	return &GoplsClient{
+	client := &GoplsClient{
 		stdin:  stdin,
 		stdout: stdout,
-		seq:    2, // next available ID
-	}, nil
+		seq:    2,
+	}
+
+	// Open both files manually
+	mainURI := "file://" + filepath.ToSlash(filepath.Join(absPath, "main.go"))
+	utilsURI := "file://" + filepath.ToSlash(filepath.Join(absPath, "utils", "utils.go"))
+
+	if err := client.DidOpenFile(mainURI); err != nil {
+		return nil, fmt.Errorf("failed to open main.go: %w", err)
+	}
+	if err := client.DidOpenFile(utilsURI); err != nil {
+		return nil, fmt.Errorf("failed to open utils/utils.go: %w", err)
+	}
+
+	return client, nil
 }
 
 func (c *GoplsClient) ModifiedDefinition(uri string, line, character int) (*ModifiedDefinitionInfo, error) {

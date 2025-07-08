@@ -101,7 +101,7 @@ func GenerateGraphNodes(sourceRoot string, files map[string]*ast.File, symbols m
 				Labels: []string{kindToLabel(def.Kind)},
 				Properties: map[string]string{
 					"simpleName":    def.Name,
-					"qualifiedName": fmt.Sprintf("%s:%d:%d", def.URI, def.Line+1, def.Character+1),
+					"qualifiedName": fmt.Sprintf("%s:%d:%d", def.URI, def.Line, def.Character),
 					"kind":          def.Kind,
 				},
 			},
@@ -152,7 +152,10 @@ func kindToLabel(kind string) string {
 	}
 }
 
-func GenerateGraphEdges(nodes []GraphNode) []GraphEdge {
+func GenerateGraphEdges(
+	nodes []GraphNode,
+	simplifiedASTs map[string]*SimplifiedASTNode,
+) []GraphEdge {
 	nodeMap := make(map[string]GraphNode)
 	for _, node := range nodes {
 		nodeMap[node.Data.ID] = node
@@ -169,7 +172,6 @@ func GenerateGraphEdges(nodes []GraphNode) []GraphEdge {
 		if parentDir == "" || parentDir == "." {
 			continue
 		}
-
 		if containsLabel(node.Data.Labels, "Scope") {
 			continue
 		}
@@ -196,6 +198,74 @@ func GenerateGraphEdges(nodes []GraphNode) []GraphEdge {
 			},
 		})
 		seen[edgeID] = true
+	}
+
+	for _, root := range simplifiedASTs {
+		var currentFuncID string
+
+		var walk func(node *SimplifiedASTNode)
+		walk = func(node *SimplifiedASTNode) {
+			if node == nil {
+				return
+			}
+
+			if node.Type == "FuncDecl" {
+				qname := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
+				currentFuncID = toNodeID(qname)
+			}
+
+			if node.Type == "CallExpr" && currentFuncID != "" {
+				for _, child := range node.Children {
+					if child.Type == "SelectorExpr" && len(child.Children) == 2 {
+						sel := child.Children[1]
+						if sel.Type == "Ident" && sel.DeclaredAt != nil {
+							targetID := toNodeID(fmt.Sprintf("%s:%d:%d", sel.DeclaredAt.URI, sel.DeclaredAt.Line, sel.DeclaredAt.Character))
+							edgeID := fmt.Sprintf("%s->%s", currentFuncID, targetID)
+							if !seen[edgeID] {
+								edges = append(edges, GraphEdge{
+									Data: EdgeData{
+										ID:     edgeID,
+										Label:  "invokes",
+										Source: currentFuncID,
+										Target: targetID,
+										Properties: map[string]string{
+											"type": "invokes",
+										},
+									},
+								})
+								seen[edgeID] = true
+							}
+						}
+					}
+
+					if child.Type == "Ident" && child.DeclaredAt != nil {
+						targetID := toNodeID(fmt.Sprintf("%s:%d:%d", child.DeclaredAt.URI, child.DeclaredAt.Line, child.DeclaredAt.Character))
+						edgeID := fmt.Sprintf("%s->%s", currentFuncID, targetID)
+						if !seen[edgeID] {
+							edges = append(edges, GraphEdge{
+								Data: EdgeData{
+									ID:     edgeID,
+									Label:  "invokes",
+									Source: currentFuncID,
+									Target: targetID,
+									Properties: map[string]string{
+										"type": "invokes",
+									},
+								},
+							})
+							seen[edgeID] = true
+						}
+					}
+				}
+			}
+
+			// Recurse
+			for _, child := range node.Children {
+				walk(child)
+			}
+		}
+
+		walk(root)
 	}
 
 	return edges

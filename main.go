@@ -136,7 +136,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to generate graph nodes: %v", err)
 	}
-	edges := extractor.GenerateGraphEdges(nodes)
+	edges := extractor.GenerateGraphEdges(nodes, simplifiedASTs)
 
 	graph := extractor.Graph{
 		Elements: extractor.Elements{
