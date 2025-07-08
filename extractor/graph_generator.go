@@ -71,7 +71,7 @@ func kindToLabel(kind string) string {
 		return "Type"
 	case "func", "method":
 		return "Operation"
-	case "var", "field", "variable":
+	case "var", "field", "variable", "param":
 		return "Variable"
 	default:
 		return "Unknown"

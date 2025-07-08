@@ -66,8 +66,8 @@ func main() {
 	}
 
 	fmt.Println("Collected symbols:")
-	for name, def := range symbolTable {
-		fmt.Printf("- %s (%s) at %s:%d:%d\n", name, def.Kind, def.URI, def.Line+1, def.Character+1)
+	for posKey, def := range symbolTable {
+		fmt.Printf("- %s (%s) at %s\n", def.Name, def.Kind, posKey)
 	}
 
 	// Start gopls

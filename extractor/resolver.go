@@ -413,6 +413,14 @@ func buildSimplifiedAST(fset *token.FileSet, node ast.Node, path string) *Simpli
 	case *ast.FuncType:
 		simp = newNode("FuncType", "", fset, path, n.Pos())
 
+		if n.Params != nil {
+			paramWrapper := newNode("Params", "", fset, path, n.Params.Pos())
+			if params := buildSimplifiedAST(fset, n.Params, path); params != nil {
+				paramWrapper.Children = []*SimplifiedASTNode{params}
+			}
+			children = append(children, paramWrapper)
+		}
+
 		if n.Results != nil {
 			resultWrapper := newNode("Results", "", fset, path, n.Results.Pos())
 			if result := buildSimplifiedAST(fset, n.Results, path); result != nil {
@@ -592,17 +600,44 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 		switch node.Type {
 
 		case "FuncDecl":
-			symbols[node.Name] = &ModifiedDefinitionInfo{
+			funcKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
+			symbols[funcKey] = &ModifiedDefinitionInfo{
 				Name:      node.Name,
+				Kind:      "func",
 				URI:       node.Position.URI,
 				Line:      node.Position.Line,
 				Character: node.Position.Character,
-				Kind:      "func",
 			}
 
 			for _, child := range node.Children {
-				if child.Type == "BlockStmt" {
+				switch child.Type {
+				case "BlockStmt":
 					collectSymbolsFromBlock(child, symbols)
+				case "FuncType":
+					for _, ftChild := range child.Children {
+						if ftChild.Type == "Params" {
+							for _, paramNode := range ftChild.Children {
+								if paramNode.Type == "FieldList" {
+									for _, field := range paramNode.Children {
+										if field.Type == "Field" {
+											for _, ident := range field.Children {
+												if ident.Type == "Ident" && isValidParamName(ident.Name) {
+													paramKey := fmt.Sprintf("%s:%d:%d", ident.Position.URI, ident.Position.Line, ident.Position.Character)
+													symbols[paramKey] = &ModifiedDefinitionInfo{
+														Name:      ident.Name,
+														Kind:      "param",
+														URI:       ident.Position.URI,
+														Line:      ident.Position.Line,
+														Character: ident.Position.Character,
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
 				}
 			}
 
@@ -611,20 +646,39 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 				child := node.Children[0]
 				switch child.Type {
 				case "StructType":
-					symbols[node.Name] = &ModifiedDefinitionInfo{
+					structKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
+					symbols[structKey] = &ModifiedDefinitionInfo{
 						Name:      node.Name,
-						URI:       node.Position.URI,
-						Line:      node.Position.Line,
-						Character: node.Position.Character,
 						Kind:      "struct",
-					}
-				case "InterfaceType":
-					symbols[node.Name] = &ModifiedDefinitionInfo{
-						Name:      node.Name,
 						URI:       node.Position.URI,
 						Line:      node.Position.Line,
 						Character: node.Position.Character,
+					}
+					for _, field := range child.Children {
+						if field.Type == "Field" {
+							for _, ident := range field.Children {
+								if ident.Type == "Ident" && isValidFieldName(ident.Name) {
+									fieldKey := fmt.Sprintf("%s:%d:%d", ident.Position.URI, ident.Position.Line, ident.Position.Character)
+									symbols[fieldKey] = &ModifiedDefinitionInfo{
+										Name:      ident.Name,
+										Kind:      "field",
+										URI:       ident.Position.URI,
+										Line:      ident.Position.Line,
+										Character: ident.Position.Character,
+									}
+								}
+							}
+						}
+					}
+
+				case "InterfaceType":
+					interfaceKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
+					symbols[interfaceKey] = &ModifiedDefinitionInfo{
+						Name:      node.Name,
 						Kind:      "interface",
+						URI:       node.Position.URI,
+						Line:      node.Position.Line,
+						Character: node.Position.Character,
 					}
 				}
 			}
@@ -632,12 +686,13 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 		case "ValueSpec":
 			for _, field := range node.Children {
 				if field.Type == "Ident" {
-					symbols[field.Name] = &ModifiedDefinitionInfo{
+					key := fmt.Sprintf("%s:%d:%d", field.Position.URI, field.Position.Line, field.Position.Character)
+					symbols[key] = &ModifiedDefinitionInfo{
 						Name:      field.Name,
+						Kind:      "var",
 						URI:       field.Position.URI,
 						Line:      field.Position.Line,
 						Character: field.Position.Character,
-						Kind:      "var",
 					}
 				}
 			}
@@ -777,4 +832,19 @@ func SaveSimplifiedAST(ast *SimplifiedASTNode, projectRoot, outputDir string) er
 	encoder := json.NewEncoder(f)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(ast)
+}
+
+func isValidParamName(name string) bool {
+	builtinTypes := map[string]bool{
+		"int": true, "int32": true, "int64": true,
+		"float32": true, "float64": true,
+		"string": true, "bool": true,
+		"byte": true, "rune": true,
+	}
+
+	return !builtinTypes[name]
+}
+
+func isValidFieldName(name string) bool {
+	return isValidParamName(name)
 }
