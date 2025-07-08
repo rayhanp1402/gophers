@@ -164,6 +164,7 @@ func GenerateGraphEdges(
 	var edges []GraphEdge
 	seen := make(map[string]bool)
 
+	// Step 1: Generate "contains" edges
 	for _, node := range nodes {
 		qname := node.Data.Properties["qualifiedName"]
 		parentDir := filepath.ToSlash(filepath.Dir(qname))
@@ -200,6 +201,7 @@ func GenerateGraphEdges(
 		seen[edgeID] = true
 	}
 
+	// Step 2: Generate "invokes" edges
 	for _, root := range simplifiedASTs {
 		var currentFuncID string
 
@@ -218,48 +220,35 @@ func GenerateGraphEdges(
 				for _, child := range node.Children {
 					if child.Type == "SelectorExpr" && len(child.Children) == 2 {
 						sel := child.Children[1]
-						if sel.Type == "Ident" && sel.DeclaredAt != nil {
-							targetID := toNodeID(fmt.Sprintf("%s:%d:%d", sel.DeclaredAt.URI, sel.DeclaredAt.Line, sel.DeclaredAt.Character))
-							edgeID := fmt.Sprintf("%s->%s", currentFuncID, targetID)
-							if !seen[edgeID] {
-								edges = append(edges, GraphEdge{
-									Data: EdgeData{
-										ID:     edgeID,
-										Label:  "invokes",
-										Source: currentFuncID,
-										Target: targetID,
-										Properties: map[string]string{
-											"type": "invokes",
-										},
-									},
-								})
-								seen[edgeID] = true
+						if sel.Type == "Ident" && sel.Name != "" {
+							// Look for a GraphNode that represents the function
+							for _, candidate := range nodes {
+								if candidate.Data.Properties["kind"] == "func" &&
+									candidate.Data.Properties["simpleName"] == sel.Name {
+									targetID := candidate.Data.ID
+									edgeID := fmt.Sprintf("%s->%s", currentFuncID, targetID)
+									if !seen[edgeID] {
+										edges = append(edges, GraphEdge{
+											Data: EdgeData{
+												ID:     edgeID,
+												Label:  "invokes",
+												Source: currentFuncID,
+												Target: targetID,
+												Properties: map[string]string{
+													"type": "invokes",
+												},
+											},
+										})
+										seen[edgeID] = true
+									}
+									break // take the first match
+								}
 							}
-						}
-					}
-
-					if child.Type == "Ident" && child.DeclaredAt != nil {
-						targetID := toNodeID(fmt.Sprintf("%s:%d:%d", child.DeclaredAt.URI, child.DeclaredAt.Line, child.DeclaredAt.Character))
-						edgeID := fmt.Sprintf("%s->%s", currentFuncID, targetID)
-						if !seen[edgeID] {
-							edges = append(edges, GraphEdge{
-								Data: EdgeData{
-									ID:     edgeID,
-									Label:  "invokes",
-									Source: currentFuncID,
-									Target: targetID,
-									Properties: map[string]string{
-										"type": "invokes",
-									},
-								},
-							})
-							seen[edgeID] = true
 						}
 					}
 				}
 			}
 
-			// Recurse
 			for _, child := range node.Children {
 				walk(child)
 			}
