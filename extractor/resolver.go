@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
+	"go/types"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/tools/go/packages"
 )
 
 type SimplifiedASTNode struct {
@@ -384,12 +387,27 @@ func ResolveNames(fset *token.FileSet, files map[string]*ast.File, rootDir strin
 	return resolved, nil
 }
 
-func buildSimplifiedAST(fset *token.FileSet, node ast.Node, path string) *SimplifiedASTNode {
-	globalVars := make(map[string]struct{})
-	return buildSimplifiedASTWithGlobals(fset, node, path, globalVars)
+func LoadTypesInfo(fset *token.FileSet, files map[string]*ast.File, absPath string) (*types.Info, *types.Package, error) {
+	cfg := &packages.Config{
+		Mode: packages.NeedSyntax | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedImports | packages.NeedDeps | packages.NeedName,
+		Fset: fset,
+		Dir:  absPath,
+	}
+	pkgs, err := packages.Load(cfg, "./...")
+	if err != nil || len(pkgs) == 0 {
+		return nil, nil, err
+	}
+
+	return pkgs[0].TypesInfo, pkgs[0].Types, nil
 }
 
-func buildSimplifiedASTWithGlobals(fset *token.FileSet, node ast.Node, path string, globalVars map[string]struct{}) *SimplifiedASTNode {
+func buildSimplifiedASTWithGlobals(
+	fset *token.FileSet,
+	node ast.Node,
+	path string,
+	globalVars map[string]struct{},
+	typesInfo *types.Info,
+) *SimplifiedASTNode {
 	if node == nil {
 		return nil
 	}
@@ -401,7 +419,7 @@ func buildSimplifiedASTWithGlobals(fset *token.FileSet, node ast.Node, path stri
 		if n == nil {
 			return
 		}
-		if child := buildSimplifiedASTWithGlobals(fset, n, path, globalVars); child != nil {
+		if child := buildSimplifiedASTWithGlobals(fset, n, path, globalVars, typesInfo); child != nil {
 			if child.Type == "" && child.Name == "" && len(child.Children) > 0 {
 				children = append(children, child.Children...)
 			} else {
@@ -419,19 +437,13 @@ func buildSimplifiedASTWithGlobals(fset *token.FileSet, node ast.Node, path stri
 			children = append(children, pkgNode)
 		}
 		for _, decl := range n.Decls {
-			if child := buildSimplifiedASTWithGlobals(fset, decl, path, globalVars); child != nil {
-				if len(child.Children) > 0 && child.Type == "" && child.Name == "" {
-					children = append(children, child.Children...)
-				} else {
-					children = append(children, child)
-				}
-			}
+			addChild(decl)
 		}
 
 	case *ast.GenDecl:
 		var specs []*SimplifiedASTNode
 		for _, spec := range n.Specs {
-			if child := buildSimplifiedASTWithGlobals(fset, spec, path, globalVars); child != nil {
+			if child := buildSimplifiedASTWithGlobals(fset, spec, path, globalVars, typesInfo); child != nil {
 				specs = append(specs, child)
 			}
 		}
@@ -441,32 +453,29 @@ func buildSimplifiedASTWithGlobals(fset *token.FileSet, node ast.Node, path stri
 		fmt.Println("Processing Function:", n.Name.Name)
 		simp = newNode("Function", n.Name.Name, fset, path, n.Pos())
 
-		// Receiver
 		if n.Recv != nil {
 			recvWrapper := newNode("Receiver", "", fset, path, n.Recv.Pos())
-			if recv := buildSimplifiedASTWithGlobals(fset, n.Recv, path, globalVars); recv != nil {
+			if recv := buildSimplifiedASTWithGlobals(fset, n.Recv, path, globalVars, typesInfo); recv != nil {
 				recvWrapper.Children = []*SimplifiedASTNode{recv}
 			}
 			children = append(children, recvWrapper)
 		}
 
-		// Params
 		if n.Type != nil {
 			if n.Type.Params != nil {
 				paramWrapper := newNode("Params", "", fset, path, n.Type.Params.Pos())
 				for _, field := range n.Type.Params.List {
-					if param := buildSimplifiedASTWithGlobals(fset, field, path, globalVars); param != nil {
+					if param := buildSimplifiedASTWithGlobals(fset, field, path, globalVars, typesInfo); param != nil {
 						paramWrapper.Children = append(paramWrapper.Children, param)
 					}
 				}
 				children = append(children, paramWrapper)
 			}
 
-			// Results
 			if n.Type.Results != nil {
 				resultWrapper := newNode("Results", "", fset, path, n.Type.Results.Pos())
 				for _, field := range n.Type.Results.List {
-					if result := buildSimplifiedASTWithGlobals(fset, field, path, globalVars); result != nil {
+					if result := buildSimplifiedASTWithGlobals(fset, field, path, globalVars, typesInfo); result != nil {
 						resultWrapper.Children = append(resultWrapper.Children, result)
 					}
 				}
@@ -474,18 +483,23 @@ func buildSimplifiedASTWithGlobals(fset *token.FileSet, node ast.Node, path stri
 			}
 		}
 
-		// Analyze function body
 		if n.Body != nil {
 			handled := map[token.Pos]bool{}
 
 			ast.Inspect(n.Body, func(x ast.Node) bool {
 				switch expr := x.(type) {
+
 				case *ast.CallExpr:
 					switch fun := expr.Fun.(type) {
 					case *ast.Ident:
 						children = append(children, newNode("Call", fun.Name, fset, path, fun.Pos()))
 					case *ast.SelectorExpr:
-						children = append(children, newNode("MethodCall", fun.Sel.Name, fset, path, fun.Sel.Pos()))
+						obj := typesInfo.ObjectOf(fun.Sel)
+						if obj != nil {
+							children = append(children, newNode("MethodCall", obj.Name(), fset, path, fun.Sel.Pos()))
+						} else {
+							children = append(children, newNode("MethodCall", fun.Sel.Name, fset, path, fun.Sel.Pos()))
+						}
 						handled[fun.Sel.Pos()] = true
 					}
 
@@ -494,23 +508,59 @@ func buildSimplifiedASTWithGlobals(fset *token.FileSet, node ast.Node, path stri
 						children = append(children, newNode("VarUse", expr.Name, fset, path, expr.Pos()))
 					} else if _, ok := globalVars[expr.Name]; ok {
 						children = append(children, newNode("GlobalVarUse", expr.Name, fset, path, expr.Pos()))
+					} else if obj := typesInfo.ObjectOf(expr); obj != nil {
+						if v, ok := obj.(*types.Var); ok && !v.IsField() {
+							children = append(children, newNode("GlobalVarUse", obj.Name(), fset, path, expr.Pos()))
+						}
+					}
+
+				case *ast.CompositeLit:
+					if sel, ok := expr.Type.(*ast.SelectorExpr); ok {
+						obj := typesInfo.ObjectOf(sel.Sel)
+						if obj != nil {
+							children = append(children, newNode("TypeUse", obj.Name(), fset, path, sel.Sel.Pos()))
+						} else {
+							children = append(children, newNode("TypeUse", sel.Sel.Name, fset, path, sel.Sel.Pos()))
+						}
+						handled[sel.Sel.Pos()] = true
 					}
 
 				case *ast.SelectorExpr:
 					if handled[expr.Sel.Pos()] {
-						return false // Already handled
-					}
-
-					if isInsideCompositeLiteral(expr, n.Body) {
-						children = append(children, newNode("TypeUse", expr.Sel.Name, fset, path, expr.Sel.Pos()))
 						return false
 					}
 
-					children = append(children, newNode("FieldUse", expr.Sel.Name, fset, path, expr.Sel.Pos()))
+					obj := typesInfo.ObjectOf(expr.Sel)
+					if obj == nil {
+						children = append(children, newNode("FieldUse", expr.Sel.Name, fset, path, expr.Sel.Pos()))
+						handled[expr.Sel.Pos()] = true
+						return false
+					}
+
+					switch v := obj.(type) {
+					case *types.TypeName:
+						children = append(children, newNode("TypeUse", v.Name(), fset, path, expr.Sel.Pos()))
+					case *types.Var:
+						if v.IsField() {
+							children = append(children, newNode("FieldUse", v.Name(), fset, path, expr.Sel.Pos()))
+						} else if v.Pkg() != nil {
+							children = append(children, newNode("GlobalVarUse", v.Name(), fset, path, expr.Sel.Pos()))
+						} else {
+							children = append(children, newNode("VarUse", v.Name(), fset, path, expr.Sel.Pos()))
+						}
+					case *types.Func:
+						children = append(children, newNode("MethodCall", v.Name(), fset, path, expr.Sel.Pos()))
+					default:
+						children = append(children, newNode("FieldUse", expr.Sel.Name, fset, path, expr.Sel.Pos()))
+					}
+
+					handled[expr.Sel.Pos()] = true
+					return false
 				}
 				return true
 			})
 		}
+
 	case *ast.TypeSpec:
 		if n.Assign != token.NoPos {
 			fmt.Println("Skipping alias:", n.Name.Name)
@@ -556,7 +606,7 @@ func buildSimplifiedASTWithGlobals(fset *token.FileSet, node ast.Node, path stri
 		simp = newNode("GlobalVar", "", fset, path, n.Pos())
 		for _, name := range n.Names {
 			addChild(name)
-			globalVars[name.Name] = struct{}{} // Track global var for later usage detection
+			globalVars[name.Name] = struct{}{}
 		}
 		addChild(n.Type)
 
@@ -573,7 +623,11 @@ func buildSimplifiedASTWithGlobals(fset *token.FileSet, node ast.Node, path stri
 	return simp
 }
 
-func BuildSimplifiedASTs(fset *token.FileSet, files map[string]*ast.File) map[string]*SimplifiedASTNode {
+func BuildSimplifiedASTs(
+	fset *token.FileSet,
+	files map[string]*ast.File,
+	typesInfo *types.Info,
+) map[string]*SimplifiedASTNode {
 	asts := make(map[string]*SimplifiedASTNode)
 	globalVars := make(map[string]struct{})
 
@@ -591,7 +645,7 @@ func BuildSimplifiedASTs(fset *token.FileSet, files map[string]*ast.File) map[st
 
 	// Second pass: generate simplified ASTs using the collected global variables
 	for path, file := range files {
-		asts[path] = buildSimplifiedASTWithGlobals(fset, file, path, globalVars)
+		asts[path] = buildSimplifiedASTWithGlobals(fset, file, path, globalVars, typesInfo)
 	}
 
 	return asts
@@ -625,8 +679,8 @@ func newNode(kind, name string, fset *token.FileSet, path string, pos token.Pos)
 	}
 }
 
-func OutputSimplifiedASTs(fset *token.FileSet, files map[string]*ast.File, projectRoot string, outDir string) error {
-	asts := BuildSimplifiedASTs(fset, files)
+func OutputSimplifiedASTs(fset *token.FileSet, files map[string]*ast.File, projectRoot string, outDir string, typesInfo *types.Info) error {
+	asts := BuildSimplifiedASTs(fset, files, typesInfo)
 
 	for path, astNode := range asts {
 		absPath, err := filepath.Abs(path)

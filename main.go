@@ -39,12 +39,18 @@ func main() {
 
 	fmt.Println("Processing files:")
 
+	typesInfo, typesPkg, err := extractor.LoadTypesInfo(fset, files, absPath)
+	if err != nil {
+		log.Fatalf("Error loading types info: %v", err)
+	}
+	fmt.Println("Loaded types for package:", typesPkg.Name())
+
 	resolvedNames, err := extractor.ResolveNames(fset, files, dir)
 	if err != nil {
 		return
 	}
 
-	err = extractor.OutputSimplifiedASTs(fset, files, absPath, INTERMEDIATE_REPRESENTATION_DIRECTORY)
+	err = extractor.OutputSimplifiedASTs(fset, files, absPath, INTERMEDIATE_REPRESENTATION_DIRECTORY, typesInfo)
 	if err != nil {
 		log.Fatalf("Error writing simplified ASTs: %v", err)
 	}
