@@ -515,14 +515,24 @@ func buildSimplifiedASTWithGlobals(
 					}
 
 				case *ast.CompositeLit:
-					if sel, ok := expr.Type.(*ast.SelectorExpr); ok {
-						obj := typesInfo.ObjectOf(sel.Sel)
+					switch t := expr.Type.(type) {
+					case *ast.SelectorExpr:
+						obj := typesInfo.ObjectOf(t.Sel)
 						if obj != nil {
-							children = append(children, newNode("TypeUse", obj.Name(), fset, path, sel.Sel.Pos()))
+							children = append(children, newNode("TypeUse", obj.Name(), fset, path, t.Sel.Pos()))
 						} else {
-							children = append(children, newNode("TypeUse", sel.Sel.Name, fset, path, sel.Sel.Pos()))
+							children = append(children, newNode("TypeUse", t.Sel.Name, fset, path, t.Sel.Pos()))
 						}
-						handled[sel.Sel.Pos()] = true
+						handled[t.Sel.Pos()] = true
+
+					case *ast.Ident:
+						obj := typesInfo.ObjectOf(t)
+						if obj != nil {
+							children = append(children, newNode("TypeUse", obj.Name(), fset, path, t.Pos()))
+						} else {
+							children = append(children, newNode("TypeUse", t.Name, fset, path, t.Pos()))
+						}
+						handled[t.Pos()] = true
 					}
 
 				case *ast.SelectorExpr:
