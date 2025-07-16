@@ -480,14 +480,13 @@ func buildSimplifiedASTWithGlobals(fset *token.FileSet, node ast.Node, path stri
 
 			ast.Inspect(n.Body, func(x ast.Node) bool {
 				switch expr := x.(type) {
-
 				case *ast.CallExpr:
 					switch fun := expr.Fun.(type) {
 					case *ast.Ident:
 						children = append(children, newNode("Call", fun.Name, fset, path, fun.Pos()))
 					case *ast.SelectorExpr:
 						children = append(children, newNode("MethodCall", fun.Sel.Name, fset, path, fun.Sel.Pos()))
-						handled[fun.Sel.Pos()] = true // Avoid duplicate FieldUse
+						handled[fun.Sel.Pos()] = true
 					}
 
 				case *ast.Ident:
@@ -499,14 +498,19 @@ func buildSimplifiedASTWithGlobals(fset *token.FileSet, node ast.Node, path stri
 
 				case *ast.SelectorExpr:
 					if handled[expr.Sel.Pos()] {
-						return false // already handled as MethodCall
+						return false // Already handled
 					}
+
+					if isInsideCompositeLiteral(expr, n.Body) {
+						children = append(children, newNode("TypeUse", expr.Sel.Name, fset, path, expr.Sel.Pos()))
+						return false
+					}
+
 					children = append(children, newNode("FieldUse", expr.Sel.Name, fset, path, expr.Sel.Pos()))
 				}
 				return true
 			})
 		}
-
 	case *ast.TypeSpec:
 		if n.Assign != token.NoPos {
 			fmt.Println("Skipping alias:", n.Name.Name)
@@ -591,6 +595,20 @@ func BuildSimplifiedASTs(fset *token.FileSet, files map[string]*ast.File) map[st
 	}
 
 	return asts
+}
+
+func isInsideCompositeLiteral(sel *ast.SelectorExpr, root ast.Node) bool {
+	var inside bool
+	ast.Inspect(root, func(n ast.Node) bool {
+		if cl, ok := n.(*ast.CompositeLit); ok {
+			if cl.Type == sel {
+				inside = true
+				return false
+			}
+		}
+		return true
+	})
+	return inside
 }
 
 func newNode(kind, name string, fset *token.FileSet, path string, pos token.Pos) *SimplifiedASTNode {
