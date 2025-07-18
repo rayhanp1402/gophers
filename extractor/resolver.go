@@ -35,6 +35,7 @@ type ModifiedDefinitionInfo struct {
 	Line      int
 	Character int
 	Kind      string
+	Type      string
 }
 
 type DefinitionInfo struct {
@@ -751,22 +752,11 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 				Character: node.Position.Character,
 			}
 
-			// Add parameters to the symbol table
+			// Add parameters
 			for _, child := range node.Children {
 				if child.Type == "Params" {
 					for _, param := range child.Children {
-						for _, ident := range param.Children {
-							if ident.Type == "Ident" {
-								paramKey := fmt.Sprintf("%s:%d:%d", ident.Position.URI, ident.Position.Line, ident.Position.Character)
-								symbols[paramKey] = &ModifiedDefinitionInfo{
-									Name:      ident.Name,
-									Kind:      "param",
-									URI:       ident.Position.URI,
-									Line:      ident.Position.Line,
-									Character: ident.Position.Character,
-								}
-							}
-						}
+						processField(param, "param", symbols)
 					}
 				}
 			}
@@ -797,18 +787,7 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 			}
 			for _, field := range node.Children {
 				if field.Type == "Field" {
-					for _, ident := range field.Children {
-						if ident.Type == "Ident" {
-							fieldKey := fmt.Sprintf("%s:%d:%d", ident.Position.URI, ident.Position.Line, ident.Position.Character)
-							symbols[fieldKey] = &ModifiedDefinitionInfo{
-								Name:      ident.Name,
-								Kind:      "field",
-								URI:       ident.Position.URI,
-								Line:      ident.Position.Line,
-								Character: ident.Position.Character,
-							}
-						}
-					}
+					processField(field, "field", symbols)
 				}
 			}
 
@@ -824,18 +803,7 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 			}
 			for _, method := range node.Children {
 				if method.Type == "Field" {
-					for _, ident := range method.Children {
-						if ident.Type == "Ident" {
-							methodKey := fmt.Sprintf("%s:%d:%d", ident.Position.URI, ident.Position.Line, ident.Position.Character)
-							symbols[methodKey] = &ModifiedDefinitionInfo{
-								Name:      ident.Name,
-								Kind:      "method",
-								URI:       ident.Position.URI,
-								Line:      ident.Position.Line,
-								Character: ident.Position.Character,
-							}
-						}
-					}
+					processField(method, "method", symbols)
 				}
 			}
 
@@ -851,7 +819,6 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 			}
 		}
 
-		// Recurse
 		for _, child := range node.Children {
 			walk(child, node.Type)
 		}
@@ -859,6 +826,40 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 
 	walk(ast, "")
 	return symbols
+}
+
+func processField(field *SimplifiedASTNode, kind string, symbols map[string]*ModifiedDefinitionInfo) {
+	var paramType string
+	seenName := false
+
+	for _, child := range field.Children {
+		if child.Type == "Ident" {
+			if !seenName {
+				// First ident is name
+				seenName = true
+				nameKey := fmt.Sprintf("%s:%d:%d", child.Position.URI, child.Position.Line, child.Position.Character)
+				symbols[nameKey] = &ModifiedDefinitionInfo{
+					Name:      child.Name,
+					Kind:      kind,
+					URI:       child.Position.URI,
+					Line:      child.Position.Line,
+					Character: child.Position.Character,
+					Type:      "", // type added later if found
+				}
+			} else {
+				// Second ident is type
+				paramType = child.Name
+				// Update the last added entry with the type
+				for k, v := range symbols {
+					if v.Kind == kind && v.Type == "" {
+						v.Type = paramType
+						symbols[k] = v
+						break
+					}
+				}
+			}
+		}
+	}
 }
 
 func LoadSimplifiedASTs(dir string) (map[string]*SimplifiedASTNode, error) {

@@ -76,6 +76,7 @@ func main() {
 		fmt.Printf("Position: %s\n", pos)
 		fmt.Printf("  Name: %s\n", info.Name)
 		fmt.Printf("  Kind: %s\n", info.Kind)
+		fmt.Printf("  Type: %s\n", info.Type) // <-- add this line
 		fmt.Printf("  URI: %s\n", info.URI)
 		fmt.Printf("  Line: %d, Character: %d\n", info.Line, info.Character)
 		fmt.Println()
