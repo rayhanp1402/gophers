@@ -165,11 +165,11 @@ func GenerateGraphNodes(
 
 func KindToLabel(kind string) []string {
     switch kind {
-    case "field", "var":
+    case "field", "var", "param":
         return []string{"Variable"}
     case "func", "method":
         return []string{"Operation", "Type"}
-    case "type":
+    case "type", "struct", "interface":
         return []string{"Type"}
     default:
         c := cases.Title(language.English)
