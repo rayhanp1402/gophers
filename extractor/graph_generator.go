@@ -229,6 +229,167 @@ func GenerateInvokesEdges(
 	return edges
 }
 
+func GenerateReturnsEdges(
+	simplifiedASTs map[string]*SimplifiedASTNode,
+	symbols map[string]*ModifiedDefinitionInfo,
+) []GraphEdge {
+	var edges []GraphEdge
+
+	// Build a map of defined type names to their node IDs
+	typeNodeMap := map[string]string{}
+	for _, def := range symbols {
+		if def.Kind == "type" || def.Kind == "struct" || def.Kind == "interface" {
+			if isPrimitiveType(def.Name) {
+				continue
+			}
+			posKey := fmt.Sprintf("%s:%d:%d", def.URI, def.Line, def.Character)
+			nodeID := toNodeID(posKey)
+			typeNodeMap[def.Name] = nodeID
+		}
+	}
+
+	// Walk through all simplified ASTs to find return edges
+	for _, root := range simplifiedASTs {
+		var walk func(node *SimplifiedASTNode)
+		walk = func(node *SimplifiedASTNode) {
+			if node.Type == "Function" || node.Type == "Method" {
+				sourceKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
+				sourceID := toNodeID(sourceKey)
+
+				for _, child := range node.Children {
+					if child.Type == "Results" {
+						for _, result := range child.Children {
+							for _, ident := range result.Children {
+								if ident.Type == "Ident" && ident.Name != "" {
+									if isPrimitiveType(ident.Name) {
+										continue
+									}
+									if targetID, ok := typeNodeMap[ident.Name]; ok {
+										edgeID := fmt.Sprintf("%s->%s.returns", sourceID, targetID)
+										edges = append(edges, GraphEdge{
+											Data: EdgeData{
+												ID:     edgeID,
+												Label:  "returns",
+												Source: sourceID,
+												Target: targetID,
+												Properties: map[string]string{
+													"from": node.Name,
+													"to":   ident.Name,
+												},
+											},
+										})
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+			for _, child := range node.Children {
+				walk(child)
+			}
+		}
+		walk(root)
+	}
+
+	return edges
+}
+
+func GenerateParameterizesEdges(
+	simplifiedASTs map[string]*SimplifiedASTNode,
+	symbols map[string]*ModifiedDefinitionInfo,
+) []GraphEdge {
+	var edges []GraphEdge
+
+	// Map function/method positions to their node IDs
+	opNodeMap := map[string]string{}
+	for _, def := range symbols {
+		if def.Kind == "func" || def.Kind == "method" {
+			funcPosKey := fmt.Sprintf("%s:%d:%d", def.URI, def.Line, def.Character)
+			opNodeMap[funcPosKey] = toNodeID(funcPosKey)
+		}
+	}
+
+	// Go through all param variables and find their associated operation
+	for symPosKey, def := range symbols {
+		if def.Kind != "param" {
+			continue
+		}
+
+		var parentFuncID string
+		if root, ok := simplifiedASTs[def.URI]; ok {
+			var walk func(node *SimplifiedASTNode)
+			walk = func(node *SimplifiedASTNode) {
+				if parentFuncID != "" {
+					return
+				}
+				if node.Type == "Function" || node.Type == "Method" {
+					for _, child := range node.Children {
+						if child.Type == "Params" {
+							for _, param := range child.Children {
+								for _, ident := range param.Children {
+									if ident.Type == "Ident" && ident.Name == def.Name {
+										// Loosened match: only compare name, not line number
+										funcKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
+										parentFuncID = toNodeID(funcKey)
+										return
+									}
+								}
+							}
+						}
+					}
+				}
+				for _, child := range node.Children {
+					walk(child)
+				}
+			}
+			walk(root)
+		}
+
+		if parentFuncID == "" {
+			continue // Could not find parent function, skip
+		}
+
+		paramID := toNodeID(symPosKey)
+		edgeID := fmt.Sprintf("%s->%s.parameterizes", paramID, parentFuncID)
+		edges = append(edges, GraphEdge{
+			Data: EdgeData{
+				ID:     edgeID,
+				Label:  "parameterizes",
+				Source: paramID,
+				Target: parentFuncID,
+				Properties: map[string]string{
+					"name": def.Name,
+				},
+			},
+		})
+	}
+
+	return edges
+}
+
+func GenerateAllEdges(
+	simplifiedASTs map[string]*SimplifiedASTNode,
+	symbols map[string]*ModifiedDefinitionInfo,
+) []GraphEdge {
+	var allEdges []GraphEdge
+
+	// Generate "invokes" edges
+	invokesEdges := GenerateInvokesEdges(simplifiedASTs, symbols)
+	allEdges = append(allEdges, invokesEdges...)
+
+	// Generate "returns" edges
+	returnsEdges := GenerateReturnsEdges(simplifiedASTs, symbols)
+	allEdges = append(allEdges, returnsEdges...)
+
+	// Generate "parameterizes" edges
+	parameterizesEdges := GenerateParameterizesEdges(simplifiedASTs, symbols)
+	allEdges = append(allEdges, parameterizesEdges...)
+
+	return allEdges
+}
+
 func AddEdge(edges *[]GraphEdge, fromID, toID, label string, props map[string]string) {
 	id := fmt.Sprintf("%s->%s:%s", fromID, toID, label)
 	*edges = append(*edges, GraphEdge{
