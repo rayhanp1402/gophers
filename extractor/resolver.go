@@ -661,20 +661,6 @@ func BuildSimplifiedASTs(
 	return asts
 }
 
-func isInsideCompositeLiteral(sel *ast.SelectorExpr, root ast.Node) bool {
-	var inside bool
-	ast.Inspect(root, func(n ast.Node) bool {
-		if cl, ok := n.(*ast.CompositeLit); ok {
-			if cl.Type == sel {
-				inside = true
-				return false
-			}
-		}
-		return true
-	})
-	return inside
-}
-
 func newNode(kind, name string, fset *token.FileSet, path string, pos token.Pos) *SimplifiedASTNode {
 	position := fset.Position(pos)
 	absPath, _ := filepath.Abs(path)
@@ -732,15 +718,15 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 
 	var walk func(node *SimplifiedASTNode)
 	walk = func(node *SimplifiedASTNode) {
-		if node == nil {
+		if node == nil || node.Position == nil {
 			return
 		}
 
-		switch node.Type {
+		posKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
 
-		case "FuncDecl":
-			funcKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
-			symbols[funcKey] = &ModifiedDefinitionInfo{
+		switch node.Type {
+		case "Function":
+			symbols[posKey] = &ModifiedDefinitionInfo{
 				Name:      node.Name,
 				Kind:      "func",
 				URI:       node.Position.URI,
@@ -748,94 +734,73 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 				Character: node.Position.Character,
 			}
 
+		case "GlobalVar":
 			for _, child := range node.Children {
-				switch child.Type {
-				case "BlockStmt":
-					collectSymbolsFromBlock(child, symbols)
-				case "FuncType":
-					for _, ftChild := range child.Children {
-						if ftChild.Type == "Params" {
-							for _, paramNode := range ftChild.Children {
-								if paramNode.Type == "FieldList" {
-									for _, field := range paramNode.Children {
-										if field.Type == "Field" {
-											for _, ident := range field.Children {
-												if ident.Type == "Ident" && isValidParamName(ident.Name) {
-													paramKey := fmt.Sprintf("%s:%d:%d", ident.Position.URI, ident.Position.Line, ident.Position.Character)
-													symbols[paramKey] = &ModifiedDefinitionInfo{
-														Name:      ident.Name,
-														Kind:      "param",
-														URI:       ident.Position.URI,
-														Line:      ident.Position.Line,
-														Character: ident.Position.Character,
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-
-		case "TypeSpec":
-			for _, child := range node.Children {
-				switch child.Type {
-				case "StructType":
-					structKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
-					symbols[structKey] = &ModifiedDefinitionInfo{
-						Name:      node.Name,
-						Kind:      "struct",
-						URI:       node.Position.URI,
-						Line:      node.Position.Line,
-						Character: node.Position.Character,
-					}
-					for _, field := range child.Children {
-						if field.Type == "Field" {
-							for _, ident := range field.Children {
-								if ident.Type == "Ident" && isValidFieldName(ident.Name) {
-									fieldKey := fmt.Sprintf("%s:%d:%d", ident.Position.URI, ident.Position.Line, ident.Position.Character)
-									symbols[fieldKey] = &ModifiedDefinitionInfo{
-										Name:      ident.Name,
-										Kind:      "field",
-										URI:       ident.Position.URI,
-										Line:      ident.Position.Line,
-										Character: ident.Position.Character,
-									}
-								}
-							}
-						}
-					}
-
-				case "InterfaceType":
-					interfaceKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
-					symbols[interfaceKey] = &ModifiedDefinitionInfo{
-						Name:      node.Name,
-						Kind:      "interface",
-						URI:       node.Position.URI,
-						Line:      node.Position.Line,
-						Character: node.Position.Character,
-					}
-				}
-			}
-
-		case "ValueSpec":
-			for _, field := range node.Children {
-				if field.Type == "Ident" {
-					key := fmt.Sprintf("%s:%d:%d", field.Position.URI, field.Position.Line, field.Position.Character)
-					symbols[key] = &ModifiedDefinitionInfo{
-						Name:      field.Name,
+				if child.Type == "Ident" {
+					childKey := fmt.Sprintf("%s:%d:%d", child.Position.URI, child.Position.Line, child.Position.Character)
+					symbols[childKey] = &ModifiedDefinitionInfo{
+						Name:      child.Name,
 						Kind:      "var",
-						URI:       field.Position.URI,
-						Line:      field.Position.Line,
-						Character: field.Position.Character,
+						URI:       child.Position.URI,
+						Line:      child.Position.Line,
+						Character: child.Position.Character,
+					}
+				}
+			}
+
+		case "Type":
+			symbols[posKey] = &ModifiedDefinitionInfo{
+				Name:      node.Name,
+				Kind:      "type",
+				URI:       node.Position.URI,
+				Line:      node.Position.Line,
+				Character: node.Position.Character,
+			}
+			// Type may have child Struct or Interface nodes
+			for _, child := range node.Children {
+				if child.Type == "Struct" || child.Type == "Interface" {
+					walk(child) // Process its fields/methods
+				}
+			}
+
+		case "Struct":
+			for _, field := range node.Children {
+				if field.Type == "Field" {
+					for _, ident := range field.Children {
+						if ident.Type == "Ident" {
+							fieldKey := fmt.Sprintf("%s:%d:%d", ident.Position.URI, ident.Position.Line, ident.Position.Character)
+							symbols[fieldKey] = &ModifiedDefinitionInfo{
+								Name:      ident.Name,
+								Kind:      "field",
+								URI:       ident.Position.URI,
+								Line:      ident.Position.Line,
+								Character: ident.Position.Character,
+							}
+						}
+					}
+				}
+			}
+
+		case "Interface":
+			for _, method := range node.Children {
+				if method.Type == "Field" {
+					for _, ident := range method.Children {
+						if ident.Type == "Ident" {
+							methodKey := fmt.Sprintf("%s:%d:%d", ident.Position.URI, ident.Position.Line, ident.Position.Character)
+							symbols[methodKey] = &ModifiedDefinitionInfo{
+								Name:      ident.Name,
+								Kind:      "method",
+								URI:       ident.Position.URI,
+								Line:      ident.Position.Line,
+								Character: ident.Position.Character,
+							}
+						}
 					}
 				}
 			}
 		}
 
+		// Recurse to children
 		for _, child := range node.Children {
 			walk(child)
 		}
@@ -879,55 +844,6 @@ func LoadSimplifiedASTs(dir string) (map[string]*SimplifiedASTNode, error) {
 	}
 
 	return simplifiedASTs, nil
-}
-
-func collectSymbolsFromBlock(node *SimplifiedASTNode, table map[string]*ModifiedDefinitionInfo) {
-	if node.Type == "BlockStmt" {
-		for _, stmt := range node.Children {
-			switch stmt.Type {
-			case "AssignStmt":
-				// Short variable declarations (:=)
-				for _, lhs := range stmt.Children {
-					if lhs.Type == "Ident" {
-						key := fmt.Sprintf("%s:%d:%d", lhs.Position.URI, lhs.Position.Line, lhs.Position.Character)
-						table[key] = &ModifiedDefinitionInfo{
-							Name:      lhs.Name,
-							Kind:      "local", // Mark as local variable
-							URI:       lhs.Position.URI,
-							Line:      lhs.Position.Line,
-							Character: lhs.Position.Character,
-						}
-					}
-				}
-			case "DeclStmt":
-				for _, decl := range stmt.Children {
-					if decl.Type == "GenDecl" {
-						for _, spec := range decl.Children {
-							if spec.Type == "ValueSpec" {
-								for _, id := range spec.Children {
-									if id.Type == "Ident" {
-										key := fmt.Sprintf("%s:%d:%d", id.Position.URI, id.Position.Line, id.Position.Character)
-										table[key] = &ModifiedDefinitionInfo{
-											Name:      id.Name,
-											Kind:      "local",
-											URI:       id.Position.URI,
-											Line:      id.Position.Line,
-											Character: id.Position.Character,
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	// Recurse into any nested blocks
-	for _, child := range node.Children {
-		collectSymbolsFromBlock(child, table)
-	}
 }
 
 func SaveSimplifiedAST(ast *SimplifiedASTNode, projectRoot, outputDir string) error {

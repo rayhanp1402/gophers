@@ -71,6 +71,16 @@ func main() {
 		}
 	}
 
+	fmt.Println("=== Symbol Table ===")
+	for pos, info := range symbolTable {
+		fmt.Printf("Position: %s\n", pos)
+		fmt.Printf("  Name: %s\n", info.Name)
+		fmt.Printf("  Kind: %s\n", info.Kind)
+		fmt.Printf("  URI: %s\n", info.URI)
+		fmt.Printf("  Line: %d, Character: %d\n", info.Line, info.Character)
+		fmt.Println()
+	}
+
 	fmt.Println("Collected symbols:")
 	for posKey, def := range symbolTable {
 		fmt.Printf("- %s (%s) at %s\n", def.Name, def.Kind, posKey)
@@ -142,12 +152,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to generate graph nodes: %v", err)
 	}
-	edges := extractor.GenerateGraphEdges(nodes, simplifiedASTs)
+	// edges := extractor.GenerateGraphEdges(nodes, simplifiedASTs)
 
 	graph := extractor.Graph{
 		Elements: extractor.Elements{
 			Nodes: nodes,
-			Edges: edges,
+			Edges: []extractor.GraphEdge{},
 		},
 	}
 

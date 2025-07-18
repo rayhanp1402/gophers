@@ -6,6 +6,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 type Graph struct {
@@ -39,10 +42,17 @@ type EdgeData struct {
 	Properties map[string]string `json:"properties"`
 }
 
-func GenerateGraphNodes(sourceRoot string, files map[string]*ast.File, symbols map[string]*ModifiedDefinitionInfo, simplifiedASTs map[string]*SimplifiedASTNode) ([]GraphNode, error) {
+func GenerateGraphNodes(
+	sourceRoot string,
+	files map[string]*ast.File,
+	symbols map[string]*ModifiedDefinitionInfo,
+	simplifiedASTs map[string]*SimplifiedASTNode,
+) ([]GraphNode, error) {
+
 	nodes := []GraphNode{}
 	seen := map[string]bool{}
 
+	// Walk the file tree to generate folder/file nodes
 	err := filepath.Walk(sourceRoot, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -83,36 +93,46 @@ func GenerateGraphNodes(sourceRoot string, files map[string]*ast.File, symbols m
 				seen[id] = true
 			}
 		}
-
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
+	// Add declaration nodes (functions, types, fields, etc.)
 	for _, def := range symbols {
 		if def.Kind == "local" {
 			continue
 		}
 
-		id := toNodeID(fmt.Sprintf("%s:%d:%d", def.URI, def.Line, def.Character))
+		posKey := fmt.Sprintf("%s:%d:%d", def.URI, def.Line, def.Character)
+		id := toNodeID(posKey)
+
 		if seen[id] {
 			continue
 		}
+
+		properties := map[string]string{
+			"simpleName":    def.Name,
+			"qualifiedName": posKey,
+			"kind":          def.Kind,
+		}
+
+		if isPrimitiveType(def.Name) {
+			continue
+		}
+
 		nodes = append(nodes, GraphNode{
 			Data: NodeData{
-				ID:     id,
-				Labels: []string{kindToLabel(def.Kind)},
-				Properties: map[string]string{
-					"simpleName":    def.Name,
-					"qualifiedName": fmt.Sprintf("%s:%d:%d", def.URI, def.Line, def.Character),
-					"kind":          def.Kind,
-				},
+				ID:         id,
+				Labels:     KindToLabel(def.Kind),
+				Properties: properties,
 			},
 		})
 		seen[id] = true
 	}
 
+	// Add package nodes as Scope
 	addedPackages := map[string]bool{}
 	for _, root := range simplifiedASTs {
 		for _, child := range root.Children {
@@ -143,17 +163,18 @@ func GenerateGraphNodes(sourceRoot string, files map[string]*ast.File, symbols m
 	return nodes, nil
 }
 
-func kindToLabel(kind string) string {
-	switch kind {
-	case "struct", "interface", "type":
-		return "Type"
-	case "func", "method":
-		return "Operation"
-	case "var", "field", "variable", "param":
-		return "Variable"
-	default:
-		return "Unknown"
-	}
+func KindToLabel(kind string) []string {
+    switch kind {
+    case "field", "var":
+        return []string{"Variable"}
+    case "func", "method":
+        return []string{"Operation", "Type"}
+    case "type":
+        return []string{"Type"}
+    default:
+        c := cases.Title(language.English)
+        return []string{c.String(kind)}
+    }
 }
 
 func GenerateGraphEdges(
