@@ -302,68 +302,47 @@ func GenerateParameterizesEdges(
 ) []GraphEdge {
 	var edges []GraphEdge
 
-	// Map function/method positions to their node IDs
-	opNodeMap := map[string]string{}
-	for _, def := range symbols {
-		if def.Kind == "func" || def.Kind == "method" {
-			funcPosKey := fmt.Sprintf("%s:%d:%d", def.URI, def.Line, def.Character)
-			opNodeMap[funcPosKey] = toNodeID(funcPosKey)
-		}
-	}
-
-	// Go through all param variables and find their associated operation
-	for symPosKey, def := range symbols {
-		if def.Kind != "param" {
-			continue
-		}
-
-		var parentFuncID string
-		if root, ok := simplifiedASTs[def.URI]; ok {
-			var walk func(node *SimplifiedASTNode)
-			walk = func(node *SimplifiedASTNode) {
-				if parentFuncID != "" {
+	for _, root := range simplifiedASTs {
+		var walk func(node *SimplifiedASTNode)
+		walk = func(node *SimplifiedASTNode) {
+			if node.Type == "Function" || node.Type == "Method" {
+				if node.Position == nil {
 					return
 				}
-				if node.Type == "Function" || node.Type == "Method" {
-					for _, child := range node.Children {
-						if child.Type == "Params" {
-							for _, param := range child.Children {
-								for _, ident := range param.Children {
-									if ident.Type == "Ident" && ident.Name == def.Name {
-										// Loosened match: only compare name, not line number
-										funcKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
-										parentFuncID = toNodeID(funcKey)
-										return
-									}
+
+				funcKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
+				funcID := toNodeID(funcKey)
+
+				for _, child := range node.Children {
+					if child.Type == "Params" {
+						for _, field := range child.Children {
+							for _, ident := range field.Children {
+								if ident.Type == "Ident" && ident.Position != nil {
+									paramKey := fmt.Sprintf("%s:%d:%d", ident.Position.URI, ident.Position.Line, ident.Position.Character)
+									paramID := toNodeID(paramKey)
+
+									edges = append(edges, GraphEdge{
+										Data: EdgeData{
+											ID:     fmt.Sprintf("%s->%s.parameterizes", paramID, funcID),
+											Label:  "parameterizes",
+											Source: paramID,
+											Target: funcID,
+											Properties: map[string]string{
+												"name": ident.Name,
+											},
+										},
+									})
 								}
 							}
 						}
 					}
 				}
-				for _, child := range node.Children {
-					walk(child)
-				}
 			}
-			walk(root)
+			for _, child := range node.Children {
+				walk(child)
+			}
 		}
-
-		if parentFuncID == "" {
-			continue // Could not find parent function, skip
-		}
-
-		paramID := toNodeID(symPosKey)
-		edgeID := fmt.Sprintf("%s->%s.parameterizes", paramID, parentFuncID)
-		edges = append(edges, GraphEdge{
-			Data: EdgeData{
-				ID:     edgeID,
-				Label:  "parameterizes",
-				Source: paramID,
-				Target: parentFuncID,
-				Properties: map[string]string{
-					"name": def.Name,
-				},
-			},
-		})
+		walk(root)
 	}
 
 	return edges
