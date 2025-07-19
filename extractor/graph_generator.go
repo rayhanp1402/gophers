@@ -397,6 +397,44 @@ func GenerateEncapsulatesEdges(
 	return edges
 }
 
+func GenerateTypedEdges(
+	symbols map[string]*ModifiedDefinitionInfo,
+) []GraphEdge {
+	var edges []GraphEdge
+
+	// Map all known type node positions for lookup
+	typeNodeMap := map[string]string{}
+	for key, def := range symbols {
+		if def.Kind == "struct" || def.Kind == "interface" || def.Kind == "type" {
+			typeNodeMap[def.Name] = toNodeID(key)
+		}
+	}
+
+	// For every variable symbol, check if its Type points to a known Type symbol
+	for symKey, def := range symbols {
+		if def.Kind != "param" && def.Kind != "var" && def.Kind != "field" {
+			continue
+		}
+
+		typeName := def.Type
+		if typeID, ok := typeNodeMap[typeName]; ok {
+			edges = append(edges, GraphEdge{
+				Data: EdgeData{
+					ID:     fmt.Sprintf("%s->%s.typed", toNodeID(symKey), typeID),
+					Label:  "typed",
+					Source: toNodeID(symKey),
+					Target: typeID,
+					Properties: map[string]string{
+						"type": typeName,
+					},
+				},
+			})
+		}
+	}
+
+	return edges
+}
+
 func GenerateAllEdges(
 	simplifiedASTs map[string]*SimplifiedASTNode,
 	symbols map[string]*ModifiedDefinitionInfo,
@@ -418,6 +456,10 @@ func GenerateAllEdges(
 	// Generate Type "encapsulates" Variable edges
 	encapsulatesEdges := GenerateEncapsulatesEdges(simplifiedASTs, symbols)
 	allEdges = append(allEdges, encapsulatesEdges...)
+
+	// Generate "typed" edges
+	typedEdges := GenerateTypedEdges(symbols)
+	allEdges = append(allEdges, typedEdges...)
 
 	return allEdges
 }
