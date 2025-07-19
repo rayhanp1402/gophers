@@ -348,6 +348,55 @@ func GenerateParameterizesEdges(
 	return edges
 }
 
+func GenerateEncapsulatesEdges(
+	simplifiedASTs map[string]*SimplifiedASTNode,
+	symbols map[string]*ModifiedDefinitionInfo,
+) []GraphEdge {
+	var edges []GraphEdge
+
+	for _, astRoot := range simplifiedASTs {
+		var walk func(node *SimplifiedASTNode)
+		walk = func(node *SimplifiedASTNode) {
+			if node.Type == "Struct" {
+				structKey := fmt.Sprintf("%s:%d:5", node.Position.URI, node.Position.Line)
+				structID := toNodeID(structKey)
+
+				for _, field := range node.Children {
+					if field.Type != "Field" {
+						continue
+					}
+					for _, ident := range field.Children {
+						if ident.Type != "Ident" {
+							continue
+						}
+						fieldKey := fmt.Sprintf("%s:%d:%d", ident.Position.URI, ident.Position.Line, ident.Position.Character)
+						fieldID := toNodeID(fieldKey)
+
+						edges = append(edges, GraphEdge{
+							Data: EdgeData{
+								ID:     fmt.Sprintf("%s->%s.encapsulates", structID, fieldID),
+								Label:  "encapsulates",
+								Source: structID,
+								Target: fieldID,
+								Properties: map[string]string{
+									"field": ident.Name,
+								},
+							},
+						})
+					}
+				}
+			}
+
+			for _, child := range node.Children {
+				walk(child)
+			}
+		}
+		walk(astRoot)
+	}
+
+	return edges
+}
+
 func GenerateAllEdges(
 	simplifiedASTs map[string]*SimplifiedASTNode,
 	symbols map[string]*ModifiedDefinitionInfo,
@@ -365,6 +414,10 @@ func GenerateAllEdges(
 	// Generate "parameterizes" edges
 	parameterizesEdges := GenerateParameterizesEdges(simplifiedASTs, symbols)
 	allEdges = append(allEdges, parameterizesEdges...)
+
+	// Generate Type "encapsulates" Variable edges
+	encapsulatesEdges := GenerateEncapsulatesEdges(simplifiedASTs, symbols)
+	allEdges = append(allEdges, encapsulatesEdges...)
 
 	return allEdges
 }
