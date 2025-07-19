@@ -348,7 +348,7 @@ func GenerateParameterizesEdges(
 	return edges
 }
 
-func GenerateEncapsulatesEdges(
+func GenerateTypeEncapsulatesVariableEdges(
 	simplifiedASTs map[string]*SimplifiedASTNode,
 	symbols map[string]*ModifiedDefinitionInfo,
 ) []GraphEdge {
@@ -435,6 +435,38 @@ func GenerateTypedEdges(
 	return edges
 }
 
+func GenerateTypeEncapsulatesOperationEdges(symbols map[string]*ModifiedDefinitionInfo) []GraphEdge {
+	var edges []GraphEdge
+
+	// Map type name → node ID
+	typeNameToID := make(map[string]string)
+	for id, sym := range symbols {
+		if sym.Kind == "struct" || sym.Kind == "interface" {
+			typeNameToID[sym.Name] = id
+		}
+	}
+
+	for id, sym := range symbols {
+		if sym.Kind == "method" && sym.ReceiverType != "" {
+			if typeID, ok := typeNameToID[sym.ReceiverType]; ok {
+				edgeID := fmt.Sprintf("%s_encapsulates_%s", typeID, id)
+
+				edges = append(edges, GraphEdge{
+					Data: EdgeData{
+						ID:         edgeID,
+						Label:      "encapsulates",
+						Source:     typeID,
+						Target:     id,
+						Properties: map[string]string{},
+					},
+				})
+			}
+		}
+	}
+
+	return edges
+}
+
 func GenerateAllEdges(
 	simplifiedASTs map[string]*SimplifiedASTNode,
 	symbols map[string]*ModifiedDefinitionInfo,
@@ -454,8 +486,12 @@ func GenerateAllEdges(
 	allEdges = append(allEdges, parameterizesEdges...)
 
 	// Generate Type "encapsulates" Variable edges
-	encapsulatesEdges := GenerateEncapsulatesEdges(simplifiedASTs, symbols)
-	allEdges = append(allEdges, encapsulatesEdges...)
+	typeEncapsulatesVariableEdges := GenerateTypeEncapsulatesVariableEdges(simplifiedASTs, symbols)
+	allEdges = append(allEdges, typeEncapsulatesVariableEdges...)
+	
+	// Generate Type "encapsulates" Variable edges
+	typeEncapsulatesOperationEdges := GenerateTypeEncapsulatesOperationEdges(symbols)
+	allEdges = append(allEdges, typeEncapsulatesOperationEdges...)
 
 	// Generate "typed" edges
 	typedEdges := GenerateTypedEdges(symbols)

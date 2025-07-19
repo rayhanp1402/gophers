@@ -36,6 +36,7 @@ type ModifiedDefinitionInfo struct {
 	Character int
 	Kind      string
 	Type      string
+	ReceiverType string
 }
 
 type DefinitionInfo struct {
@@ -741,22 +742,69 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 		switch node.Type {
 		case "Function", "Method":
 			kind := "func"
+			var receiverType string
+
 			if node.Type == "Method" {
 				kind = "method"
-			}
-			symbols[posKey] = &ModifiedDefinitionInfo{
-				Name:      node.Name,
-				Kind:      kind,
-				URI:       node.Position.URI,
-				Line:      node.Position.Line,
-				Character: node.Position.Character,
+				// look for Receiver node
+				for _, child := range node.Children {
+					if child.Type == "Receiver" {
+						for _, fieldList := range child.Children {
+							if fieldList.Type == "FieldList" {
+								for _, field := range fieldList.Children {
+									if field.Type == "Field" {
+										for _, ident := range field.Children {
+											if ident.Type == "Ident" {
+												receiverType = ident.Name
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 
-			// Add parameters
-			for _, child := range node.Children {
-				if child.Type == "Params" {
-					for _, param := range child.Children {
-						processField(param, "param", symbols)
+			symbols[posKey] = &ModifiedDefinitionInfo{
+				Name:         node.Name,
+				Kind:         kind,
+				URI:          node.Position.URI,
+				Line:         node.Position.Line,
+				Character:    node.Position.Character,
+				ReceiverType: receiverType,
+			}
+
+		case "Params":
+			for _, field := range node.Children {
+				if field.Type == "Field" {
+					var fieldType string
+
+					// Find the type from Field's children (e.g., Ident or SelectorExpr)
+					for _, sub := range field.Children {
+						if sub.Type == "Ident" || sub.Type == "SelectorExpr" {
+							fieldType = sub.Name
+						}
+					}
+
+					// Now find the identifier(s) that use this type
+					for _, sub := range field.Children {
+						if sub.Type == "Ident" && sub.Position != nil {
+							// Skip if it's the type, already used
+							if sub.Name == fieldType {
+								continue
+							}
+
+							identKey := fmt.Sprintf("%s:%d:%d", sub.Position.URI, sub.Position.Line, sub.Position.Character)
+							symbols[identKey] = &ModifiedDefinitionInfo{
+								Name:      sub.Name,
+								Kind:      "param",
+								Type:      fieldType,
+								URI:       sub.Position.URI,
+								Line:      sub.Position.Line,
+								Character: sub.Position.Character,
+							}
+						}
 					}
 				}
 			}

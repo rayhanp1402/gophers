@@ -79,6 +79,7 @@ func main() {
 		fmt.Printf("  Type: %s\n", info.Type) // <-- add this line
 		fmt.Printf("  URI: %s\n", info.URI)
 		fmt.Printf("  Line: %d, Character: %d\n", info.Line, info.Character)
+		fmt.Printf("  Receiver Type: %s\n", info.ReceiverType)
 		fmt.Println()
 	}
 
