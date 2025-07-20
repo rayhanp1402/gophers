@@ -96,9 +96,9 @@ func main() {
 	defer client.Close()
 
 	// Annotate each simplified AST
-	for _, root := range simplifiedASTs {
-		extractor.AnnotateASTWithDefinitions(root, client)
-	}
+	// for _, root := range simplifiedASTs {
+	// 	extractor.AnnotateASTWithDefinitions(root, client)
+	// }
 
 	for _, root := range simplifiedASTs {
 		err := extractor.SaveSimplifiedAST(root, absPath, INTERMEDIATE_REPRESENTATION_DIRECTORY)
@@ -154,7 +154,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to generate graph nodes: %v", err)
 	}
-	edges := extractor.GenerateAllEdges(simplifiedASTs, symbolTable)
+	edges := extractor.GenerateAllEdges(simplifiedASTs, symbolTable, absPath)
 
 	graph := extractor.Graph{
 		Elements: extractor.Elements{

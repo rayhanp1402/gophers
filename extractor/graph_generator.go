@@ -511,11 +511,66 @@ func GenerateScopeEnclosesTypeEdges(
 	return edges
 }
 
+func GenerateFolderContainsEdges(sourceRoot string) ([]GraphEdge, error) {
+	var edges []GraphEdge
+
+	err := filepath.Walk(sourceRoot, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if path == sourceRoot {
+			// Skip root folder
+			return nil
+		}
+
+		normalizedPath := filepath.ToSlash(path)
+		parent := filepath.Dir(normalizedPath)
+		parentID := toNodeID(filepath.ToSlash(parent))
+		childID := ""
+
+		if info.IsDir() {
+			childID = toNodeID(normalizedPath)
+		} else if filepath.Ext(path) == ".go" {
+			childID = toNodeID(normalizedPath + ".go")
+		} else {
+			return nil // Skip non-Go files
+		}
+
+		edgeID := fmt.Sprintf("%s->%s.contains", parentID, childID)
+		edges = append(edges, GraphEdge{
+			Data: EdgeData{
+				ID:     edgeID,
+				Label:  "contains",
+				Source: parentID,
+				Target: childID,
+				Properties: map[string]string{
+					"kind": "FolderContains",
+				},
+			},
+		})
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return edges, nil
+}
+
 func GenerateAllEdges(
 	simplifiedASTs map[string]*SimplifiedASTNode,
 	symbols map[string]*ModifiedDefinitionInfo,
+	sourceRoot string,
 ) []GraphEdge {
 	var allEdges []GraphEdge
+
+	folderEdges, err := GenerateFolderContainsEdges(sourceRoot)
+	if err == nil {
+		allEdges = append(allEdges, folderEdges...)
+	}
 
 	// Generate "invokes" edges
 	invokesEdges := GenerateInvokesEdges(simplifiedASTs, symbols)
