@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/ast"
+	"go/importer"
 	"go/token"
 	"go/types"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -389,18 +391,102 @@ func ResolveNames(fset *token.FileSet, files map[string]*ast.File, rootDir strin
 	return resolved, nil
 }
 
-func LoadTypesInfo(fset *token.FileSet, files map[string]*ast.File, absPath string) (*types.Info, *types.Package, error) {
-	cfg := &packages.Config{
-		Mode: packages.NeedSyntax | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedImports | packages.NeedDeps | packages.NeedName,
-		Fset: fset,
-		Dir:  absPath,
+func findGoModRoot(start string) (string, error) {
+	dir := start
+	for {
+		goModPath := filepath.Join(dir, "go.mod")
+		fmt.Println("Checking:", goModPath) // ← debug log
+		if _, err := os.Stat(goModPath); err == nil {
+			return dir, nil
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
 	}
-	pkgs, err := packages.Load(cfg, "./...")
-	if err != nil || len(pkgs) == 0 {
-		return nil, nil, err
+	return "", fmt.Errorf("go.mod not found from %s", start)
+}
+
+func LoadTypesInfo(
+	fset *token.FileSet,
+	files map[string]*ast.File,
+	absPath string,
+) (*types.Info, *types.Package, error) {
+	modRoot, err := findGoModRoot(absPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to find go.mod root: %w", err)
 	}
 
-	return pkgs[0].TypesInfo, pkgs[0].Types, nil
+	cfg := &packages.Config{
+		Mode:  packages.NeedName | packages.NeedImports | packages.NeedTypes,
+		Fset:  fset,
+		Dir:   modRoot,
+		Tests: false,
+	}
+
+	pkgs, err := packages.Load(cfg, "./...")
+	if err != nil || len(pkgs) == 0 {
+		return nil, nil, fmt.Errorf("failed to load package: %w", err)
+	}
+
+	// Group files by their package name
+	filesByPkg := map[string][]*ast.File{}
+	for _, f := range files {
+		pkgName := f.Name.Name
+		filesByPkg[pkgName] = append(filesByPkg[pkgName], f)
+	}
+
+	// Prepare a shared symbol table
+	mergedInfo := &types.Info{
+		Defs:       make(map[*ast.Ident]types.Object),
+		Uses:       make(map[*ast.Ident]types.Object),
+		Selections: make(map[*ast.SelectorExpr]*types.Selection),
+	}
+
+	var lastPkg *types.Package
+	importer := importer.Default()
+
+	for pkgName, fileList := range filesByPkg {
+		info := &types.Info{
+			Defs:       make(map[*ast.Ident]types.Object),
+			Uses:       make(map[*ast.Ident]types.Object),
+			Selections: make(map[*ast.SelectorExpr]*types.Selection),
+		}
+
+		config := &types.Config{
+			Importer:                 importer,
+			DisableUnusedImportCheck: true,
+			Error: func(err error) {
+				log.Printf("type error (%s): %v", pkgName, err)
+			},
+		}
+
+		pkg, err := config.Check(pkgName, fset, fileList, info)
+		if err != nil {
+			log.Printf("type checking failed for package %s: %v", pkgName, err)
+			continue
+		}
+
+		lastPkg = pkg // keep the last successfully loaded package (can be utils or main)
+
+		// Merge into unified Info
+		for k, v := range info.Defs {
+			mergedInfo.Defs[k] = v
+		}
+		for k, v := range info.Uses {
+			mergedInfo.Uses[k] = v
+		}
+		for k, v := range info.Selections {
+			mergedInfo.Selections[k] = v
+		}
+	}
+
+	if lastPkg == nil {
+		return nil, nil, fmt.Errorf("type checking failed for all packages")
+	}
+
+	return mergedInfo, lastPkg, nil
 }
 
 func buildSimplifiedASTWithGlobals(
@@ -433,9 +519,9 @@ func buildSimplifiedASTWithGlobals(
 	switch n := node.(type) {
 
 	case *ast.File:
-		simp = newNode("File", filepath.Base(path), fset, path, n.Pos())
+		simp = newNode("File", filepath.Base(path), fset, path, n.Pos(), nil)
 		if n.Name != nil {
-			pkgNode := newNode("Package", n.Name.Name, fset, path, n.Name.Pos())
+			pkgNode := newNode("Package", n.Name.Name, fset, path, n.Name.Pos(), typesInfo.ObjectOf(n.Name))
 			children = append(children, pkgNode)
 		}
 		for _, decl := range n.Decls {
@@ -457,10 +543,10 @@ func buildSimplifiedASTWithGlobals(
 		if n.Recv != nil {
 			nodeType = "Method"
 		}
-		simp = newNode(nodeType, n.Name.Name, fset, path, n.Pos())
+		simp = newNode(nodeType, n.Name.Name, fset, path, n.Pos(), typesInfo.ObjectOf(n.Name))
 
 		if n.Recv != nil {
-			recvWrapper := newNode("Receiver", "", fset, path, n.Recv.Pos())
+			recvWrapper := newNode("Receiver", "", fset, path, n.Recv.Pos(), nil)
 			if recv := buildSimplifiedASTWithGlobals(fset, n.Recv, path, globalVars, typesInfo); recv != nil {
 				recvWrapper.Children = []*SimplifiedASTNode{recv}
 			}
@@ -469,7 +555,7 @@ func buildSimplifiedASTWithGlobals(
 
 		if n.Type != nil {
 			if n.Type.Params != nil {
-				paramWrapper := newNode("Params", "", fset, path, n.Type.Params.Pos())
+				paramWrapper := newNode("Params", "", fset, path, n.Type.Params.Pos(), nil)
 				for _, field := range n.Type.Params.List {
 					if param := buildSimplifiedASTWithGlobals(fset, field, path, globalVars, typesInfo); param != nil {
 						paramWrapper.Children = append(paramWrapper.Children, param)
@@ -479,7 +565,7 @@ func buildSimplifiedASTWithGlobals(
 			}
 
 			if n.Type.Results != nil {
-				resultWrapper := newNode("Results", "", fset, path, n.Type.Results.Pos())
+				resultWrapper := newNode("Results", "", fset, path, n.Type.Results.Pos(), nil)
 				for _, field := range n.Type.Results.List {
 					if result := buildSimplifiedASTWithGlobals(fset, field, path, globalVars, typesInfo); result != nil {
 						resultWrapper.Children = append(resultWrapper.Children, result)
@@ -498,25 +584,21 @@ func buildSimplifiedASTWithGlobals(
 				case *ast.CallExpr:
 					switch fun := expr.Fun.(type) {
 					case *ast.Ident:
-						children = append(children, newNode("Call", fun.Name, fset, path, fun.Pos()))
+						obj := typesInfo.ObjectOf(fun)
+						children = append(children, newNode("Call", fun.Name, fset, path, fun.Pos(), obj))
 					case *ast.SelectorExpr:
 						obj := typesInfo.ObjectOf(fun.Sel)
-						if obj != nil {
-							children = append(children, newNode("MethodCall", obj.Name(), fset, path, fun.Sel.Pos()))
-						} else {
-							children = append(children, newNode("MethodCall", fun.Sel.Name, fset, path, fun.Sel.Pos()))
-						}
+						children = append(children, newNode("MethodCall", fun.Sel.Name, fset, path, fun.Sel.Pos(), obj))
 						handled[fun.Sel.Pos()] = true
 					}
 
 				case *ast.Ident:
-					if expr.Obj != nil && expr.Obj.Kind == ast.Var {
-						children = append(children, newNode("VarUse", expr.Name, fset, path, expr.Pos()))
-					} else if _, ok := globalVars[expr.Name]; ok {
-						children = append(children, newNode("GlobalVarUse", expr.Name, fset, path, expr.Pos()))
-					} else if obj := typesInfo.ObjectOf(expr); obj != nil {
-						if v, ok := obj.(*types.Var); ok && !v.IsField() {
-							children = append(children, newNode("GlobalVarUse", obj.Name(), fset, path, expr.Pos()))
+					obj := typesInfo.ObjectOf(expr)
+					if obj != nil {
+						if _, ok := globalVars[expr.Name]; ok {
+							children = append(children, newNode("GlobalVarUse", expr.Name, fset, path, expr.Pos(), obj))
+						} else if v, ok := obj.(*types.Var); ok && !v.IsField() {
+							children = append(children, newNode("VarUse", expr.Name, fset, path, expr.Pos(), obj))
 						}
 					}
 
@@ -524,20 +606,11 @@ func buildSimplifiedASTWithGlobals(
 					switch t := expr.Type.(type) {
 					case *ast.SelectorExpr:
 						obj := typesInfo.ObjectOf(t.Sel)
-						if obj != nil {
-							children = append(children, newNode("TypeUse", obj.Name(), fset, path, t.Sel.Pos()))
-						} else {
-							children = append(children, newNode("TypeUse", t.Sel.Name, fset, path, t.Sel.Pos()))
-						}
+						children = append(children, newNode("TypeUse", t.Sel.Name, fset, path, t.Sel.Pos(), obj))
 						handled[t.Sel.Pos()] = true
-
 					case *ast.Ident:
 						obj := typesInfo.ObjectOf(t)
-						if obj != nil {
-							children = append(children, newNode("TypeUse", obj.Name(), fset, path, t.Pos()))
-						} else {
-							children = append(children, newNode("TypeUse", t.Name, fset, path, t.Pos()))
-						}
+						children = append(children, newNode("TypeUse", t.Name, fset, path, t.Pos(), obj))
 						handled[t.Pos()] = true
 					}
 
@@ -546,28 +619,59 @@ func buildSimplifiedASTWithGlobals(
 						return false
 					}
 
-					obj := typesInfo.ObjectOf(expr.Sel)
-					if obj == nil {
-						children = append(children, newNode("FieldUse", expr.Sel.Name, fset, path, expr.Sel.Pos()))
-						handled[expr.Sel.Pos()] = true
-						return false
-					}
+					// DEBUG log: print selector name
+					log.Printf("SelectorExpr: %s\n", expr.Sel.Name)
 
-					switch v := obj.(type) {
-					case *types.TypeName:
-						children = append(children, newNode("TypeUse", v.Name(), fset, path, expr.Sel.Pos()))
-					case *types.Var:
-						if v.IsField() {
-							children = append(children, newNode("FieldUse", v.Name(), fset, path, expr.Sel.Pos()))
-						} else if v.Pkg() != nil {
-							children = append(children, newNode("GlobalVarUse", v.Name(), fset, path, expr.Sel.Pos()))
-						} else {
-							children = append(children, newNode("VarUse", v.Name(), fset, path, expr.Sel.Pos()))
+					if selInfo, ok := typesInfo.Selections[expr]; ok {
+						obj := selInfo.Obj()
+						kind := "FieldUse"
+						if selInfo.Kind() == types.MethodVal || selInfo.Kind() == types.MethodExpr {
+							kind = "MethodCall"
 						}
-					case *types.Func:
-						children = append(children, newNode("MethodCall", v.Name(), fset, path, expr.Sel.Pos()))
-					default:
-						children = append(children, newNode("FieldUse", expr.Sel.Name, fset, path, expr.Sel.Pos()))
+
+						// DEBUG log: what we resolved
+						log.Printf("  -> Selection resolved: obj=%#v\n", obj)
+
+						node := newResolvedNode(kind, expr.Sel.Name, fset, path, expr.Sel.Pos(), obj)
+
+						if node.DeclaredAt != nil {
+							log.Printf("  -> DeclaredAt: %+v\n", *node.DeclaredAt)
+						} else {
+							log.Println("  -> DeclaredAt: nil")
+						}
+
+						children = append(children, node)
+					} else {
+						// fallback to ObjectOf if Selection failed
+						obj := typesInfo.ObjectOf(expr.Sel)
+						log.Printf("  -> Selection not found, fallback ObjectOf: obj=%#v\n", obj)
+
+						kind := "FieldUse"
+						if obj != nil {
+							switch v := obj.(type) {
+							case *types.TypeName:
+								kind = "TypeUse"
+							case *types.Var:
+								if v.IsField() {
+									kind = "FieldUse"
+								} else if v.Pkg() != nil {
+									kind = "GlobalVarUse"
+								} else {
+									kind = "VarUse"
+								}
+							case *types.Func:
+								kind = "MethodCall"
+							}
+						}
+
+						node := newResolvedNode(kind, expr.Sel.Name, fset, path, expr.Sel.Pos(), obj)
+						if node.DeclaredAt != nil {
+							log.Printf("  -> DeclaredAt: %+v\n", *node.DeclaredAt)
+						} else {
+							log.Println("  -> DeclaredAt: nil")
+						}
+
+						children = append(children, node)
 					}
 
 					handled[expr.Sel.Pos()] = true
@@ -583,21 +687,22 @@ func buildSimplifiedASTWithGlobals(
 			return nil
 		}
 		fmt.Println("Processing TypeSpec:", n.Name.Name)
+		obj := typesInfo.ObjectOf(n.Name)
 		switch actual := n.Type.(type) {
-			case *ast.StructType:
-				simp = newNode("Struct", n.Name.Name, fset, path, n.Pos())
-				addChild(actual)
-			case *ast.InterfaceType:
-				simp = newNode("Interface", n.Name.Name, fset, path, n.Pos())
-				addChild(actual)
-			default:
-				simp = newNode("Type", n.Name.Name, fset, path, n.Pos())
-				addChild(actual)
+		case *ast.StructType:
+			simp = newNode("Struct", n.Name.Name, fset, path, n.Pos(), obj)
+			addChild(actual)
+		case *ast.InterfaceType:
+			simp = newNode("Interface", n.Name.Name, fset, path, n.Pos(), obj)
+			addChild(actual)
+		default:
+			simp = newNode("Type", n.Name.Name, fset, path, n.Pos(), obj)
+			addChild(actual)
 		}
 
 	case *ast.StructType:
 		fmt.Println("Processing StructType")
-		simp = newNode("Struct", "", fset, path, n.Pos())
+		simp = newNode("Struct", "", fset, path, n.Pos(), nil)
 		if n.Fields != nil {
 			for _, field := range n.Fields.List {
 				addChild(field)
@@ -606,7 +711,7 @@ func buildSimplifiedASTWithGlobals(
 
 	case *ast.InterfaceType:
 		fmt.Println("Processing InterfaceType")
-		simp = newNode("Interface", "", fset, path, n.Pos())
+		simp = newNode("Interface", "", fset, path, n.Pos(), nil)
 		if n.Methods != nil {
 			for _, field := range n.Methods.List {
 				addChild(field)
@@ -614,13 +719,13 @@ func buildSimplifiedASTWithGlobals(
 		}
 
 	case *ast.FieldList:
-		simp = newNode("FieldList", "", fset, path, n.Pos())
+		simp = newNode("FieldList", "", fset, path, n.Pos(), nil)
 		for _, field := range n.List {
 			addChild(field)
 		}
 
 	case *ast.Field:
-		simp = newNode("Field", "", fset, path, n.Pos())
+		simp = newNode("Field", "", fset, path, n.Pos(), nil)
 		for _, name := range n.Names {
 			addChild(name)
 		}
@@ -628,7 +733,7 @@ func buildSimplifiedASTWithGlobals(
 
 	case *ast.ValueSpec:
 		fmt.Println("Processing GlobalVar")
-		simp = newNode("GlobalVar", "", fset, path, n.Pos())
+		simp = newNode("GlobalVar", "", fset, path, n.Pos(), nil)
 		for _, name := range n.Names {
 			addChild(name)
 			globalVars[name.Name] = struct{}{}
@@ -636,7 +741,7 @@ func buildSimplifiedASTWithGlobals(
 		addChild(n.Type)
 
 	case *ast.Ident:
-		simp = newNode("Ident", n.Name, fset, path, n.Pos())
+		simp = newNode("Ident", n.Name, fset, path, n.Pos(), typesInfo.ObjectOf(n))
 
 	default:
 		return nil
@@ -676,9 +781,25 @@ func BuildSimplifiedASTs(
 	return asts
 }
 
-func newNode(kind, name string, fset *token.FileSet, path string, pos token.Pos) *SimplifiedASTNode {
+func newNode(kind, name string, fset *token.FileSet, path string, pos token.Pos, obj types.Object) *SimplifiedASTNode {
 	position := fset.Position(pos)
 	absPath, _ := filepath.Abs(path)
+
+	var declaredAt *ModifiedDefinitionInfo
+	if obj != nil {
+		objPos := fset.Position(obj.Pos())
+		objAbsPath, _ := filepath.Abs(objPos.Filename)
+		declaredAt = &ModifiedDefinitionInfo{
+			Name:         obj.Name(),
+			URI:          "file://" + filepath.ToSlash(objAbsPath),
+			Line:         objPos.Line - 1,
+			Character:    objPos.Column - 1,
+			Kind:         strings.ToLower(strings.TrimPrefix(fmt.Sprintf("%T", obj), "*types.")), // e.g., "Var", "Func"
+			Type:         obj.Type().String(),
+			ReceiverType: receiverTypeString(obj),
+		}
+	}
+
 	return &SimplifiedASTNode{
 		Type: kind,
 		Name: name,
@@ -687,7 +808,66 @@ func newNode(kind, name string, fset *token.FileSet, path string, pos token.Pos)
 			Line:      position.Line - 1,
 			Character: position.Column - 1,
 		},
+		DeclaredAt: declaredAt,
 	}
+}
+
+func receiverTypeString(obj types.Object) string {
+	if fn, ok := obj.(*types.Func); ok {
+		if sig, ok := fn.Type().(*types.Signature); ok && sig.Recv() != nil {
+			return sig.Recv().Type().String()
+		}
+	}
+	return ""
+}
+
+func newResolvedNode(kind, name string, fset *token.FileSet, path string, pos token.Pos, obj types.Object) *SimplifiedASTNode {
+	node := newNode(kind, name, fset, path, pos, obj)
+	if obj != nil {
+		position := fset.Position(obj.Pos())
+		node.DeclaredAt = &ModifiedDefinitionInfo{
+			Name:         obj.Name(),
+			URI:          filepath.ToSlash(position.Filename), // no "file://" prefix
+			Line:         position.Line,
+			Character:    position.Column,
+			Kind:         objectKind(obj),
+			Type:         obj.Type().String(),
+			ReceiverType: receiverType(obj),
+		}
+	}
+	return node
+}
+
+func objectKind(obj types.Object) string {
+	switch obj := obj.(type) {
+	case *types.Const:
+		return "const"
+	case *types.Var:
+		if obj.IsField() {
+			return "field"
+		}
+		return "var"
+	case *types.Func:
+		return "func"
+	case *types.TypeName:
+		return "type"
+	case *types.Label:
+		return "label"
+	case *types.PkgName:
+		return "package"
+	case *types.Builtin:
+		return "builtin"
+	}
+	return "unknown"
+}
+
+func receiverType(obj types.Object) string {
+	if fn, ok := obj.(*types.Func); ok {
+		if sig, ok := fn.Type().(*types.Signature); ok && sig.Recv() != nil {
+			return sig.Recv().Type().String()
+		}
+	}
+	return ""
 }
 
 func OutputSimplifiedASTs(fset *token.FileSet, files map[string]*ast.File, projectRoot string, outDir string, typesInfo *types.Info) error {
