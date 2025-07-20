@@ -467,6 +467,50 @@ func GenerateTypeEncapsulatesOperationEdges(symbols map[string]*ModifiedDefiniti
 	return edges
 }
 
+func GenerateScopeEnclosesTypeEdges(
+	symbols map[string]*ModifiedDefinitionInfo,
+) []GraphEdge {
+	var edges []GraphEdge
+
+	for _, def := range symbols {
+		if def.Kind != "struct" && def.Kind != "interface" && def.Kind != "type" {
+			continue
+		}
+
+		// Keep URI with file:// prefix for typeID
+		filePath := filepath.ToSlash(def.URI)
+		dir := filepath.Dir(strings.TrimPrefix(filePath, "file://"))
+
+		// Determine package name: if file is main.go, use "main"
+		baseName := filepath.Base(strings.TrimPrefix(filePath, "file://"))
+		pkgName := strings.TrimSuffix(baseName, ".go")
+		if pkgName == "main" {
+			pkgName = "main"
+		}
+
+		// Compose the same package ID as in GenerateGraphNodes
+		scopeQualified := fmt.Sprintf("%s/%s", dir, pkgName)
+		scopeID := toNodeID(scopeQualified + ".package")
+
+		// This keeps the file:// prefix
+		typeID := toNodeID(fmt.Sprintf("%s:%d:%d", filePath, def.Line, def.Character))
+
+		edges = append(edges, GraphEdge{
+			Data: EdgeData{
+				ID:     fmt.Sprintf("encloses:%s->%s", scopeID, typeID),
+				Label:  "encloses",
+				Source: scopeID,
+				Target: typeID,
+				Properties: map[string]string{
+					"kind": "ScopeEnclosesType",
+				},
+			},
+		})
+	}
+
+	return edges
+}
+
 func GenerateAllEdges(
 	simplifiedASTs map[string]*SimplifiedASTNode,
 	symbols map[string]*ModifiedDefinitionInfo,
@@ -496,6 +540,10 @@ func GenerateAllEdges(
 	// Generate "typed" edges
 	typedEdges := GenerateTypedEdges(symbols)
 	allEdges = append(allEdges, typedEdges...)
+
+	// Generate Scope "encloses" Type edges
+	scopeEnclosesTypeEdges := GenerateScopeEnclosesTypeEdges(symbols)
+	allEdges = append(allEdges, scopeEnclosesTypeEdges...)
 
 	return allEdges
 }
