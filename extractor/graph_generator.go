@@ -560,6 +560,79 @@ func GenerateFolderContainsEdges(sourceRoot string) ([]GraphEdge, error) {
 	return edges, nil
 }
 
+func GenerateFileDeclaresEdges(symbols map[string]*ModifiedDefinitionInfo) []GraphEdge {
+	var edges []GraphEdge
+
+	for symKey, def := range symbols {
+		// Filter by kind
+		if def.Kind != "type" && def.Kind != "struct" && def.Kind != "interface" &&
+			def.Kind != "func" && def.Kind != "method" &&
+			def.Kind != "var" {
+			continue
+		}
+
+		// Only include global vars
+		if def.Kind == "var" && def.ReceiverType != "" {
+			continue
+		}
+
+		// File ID: file://... (no need to add ".go")
+		trimmed := strings.TrimPrefix(def.URI, "file://")
+		fileID := toNodeID(trimmed + ".go")
+		defID := toNodeID(symKey)
+
+		edgeID := fmt.Sprintf("%s->%s.declares", fileID, defID)
+		edges = append(edges, GraphEdge{
+			Data: EdgeData{
+				ID:     edgeID,
+				Label:  "declares",
+				Source: fileID,
+				Target: defID,
+				Properties: map[string]string{
+					"kind": def.Kind,
+					"name": def.Name,
+				},
+			},
+		})
+	}
+
+	return edges
+}
+
+func GenerateFileDeclaresScopeEdges(simplifiedASTs map[string]*SimplifiedASTNode) []GraphEdge {
+	var edges []GraphEdge
+
+	for _, root := range simplifiedASTs {
+		for _, child := range root.Children {
+			if child.Type == "Package" && child.Name != "" && child.Position != nil {
+				trimmed := strings.TrimPrefix(child.Position.URI, "file://")
+				fileID := toNodeID(trimmed + ".go")
+				scopePath := filepath.ToSlash(strings.TrimPrefix(child.Position.URI, "file://"))
+				dir := filepath.Dir(scopePath)
+				qualified := fmt.Sprintf("%s/%s", dir, child.Name)
+
+				scopeID := toNodeID(qualified + ".package")
+
+				edgeID := fmt.Sprintf("%s->%s.declares", fileID, scopeID)
+				edges = append(edges, GraphEdge{
+					Data: EdgeData{
+						ID:     edgeID,
+						Label:  "declares",
+						Source: fileID,
+						Target: scopeID,
+						Properties: map[string]string{
+							"kind": "Scope",
+							"name": child.Name,
+						},
+					},
+				})
+			}
+		}
+	}
+
+	return edges
+}
+
 func GenerateAllEdges(
 	simplifiedASTs map[string]*SimplifiedASTNode,
 	symbols map[string]*ModifiedDefinitionInfo,
@@ -571,6 +644,14 @@ func GenerateAllEdges(
 	if err == nil {
 		allEdges = append(allEdges, folderEdges...)
 	}
+
+	// File declares Scope
+	scopeDeclEdges := GenerateFileDeclaresScopeEdges(simplifiedASTs)
+	allEdges = append(allEdges, scopeDeclEdges...)
+
+	// File declares Variable, Type, Operation
+	declaresEdges := GenerateFileDeclaresEdges(symbols)
+	allEdges = append(allEdges, declaresEdges...)
 
 	// Generate "invokes" edges
 	invokesEdges := GenerateInvokesEdges(simplifiedASTs, symbols)
