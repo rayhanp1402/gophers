@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"golang.org/x/tools/go/packages"
@@ -742,6 +743,13 @@ func buildSimplifiedASTWithGlobals(
 
 	case *ast.Ident:
 		simp = newNode("Ident", n.Name, fset, path, n.Pos(), typesInfo.ObjectOf(n))
+		
+	case *ast.ImportSpec:
+		importPath, err := strconv.Unquote(n.Path.Value)
+		if err != nil {
+			importPath = n.Path.Value // fallback if not quoted
+		}
+		simp = newNode("Import", importPath, fset, path, n.Pos(), nil)
 
 	default:
 		return nil

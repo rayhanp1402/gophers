@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/ast"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -692,12 +693,64 @@ func collectUses(node *SimplifiedASTNode, out *[]*SimplifiedASTNode) {
 	}
 }
 
-func findDeclaredID(opNode *SimplifiedASTNode, symbols map[string]*ModifiedDefinitionInfo) string {
-	if opNode.DeclaredAt == nil {
-		return ""
+func GenerateRequiresEdges(
+	simplifiedASTs map[string]*SimplifiedASTNode,
+) []GraphEdge {
+	var edges []GraphEdge
+
+	// Map from package name to the actual file URI (from fileNode.Position.URI)
+	packageToFile := make(map[string]string)
+	for _, fileNode := range simplifiedASTs {
+		for _, child := range fileNode.Children {
+			if child.Type == "Package" {
+				// Store absolute path from the fileNode’s URI
+				uri := strings.TrimPrefix(fileNode.Position.URI, "file://")
+				packageToFile[child.Name] = uri
+			}
+		}
 	}
-	key := fmt.Sprintf("%s:%d:%d", opNode.DeclaredAt.URI, opNode.DeclaredAt.Line, opNode.DeclaredAt.Character)
-	return toNodeID(key)
+
+	for _, fileNode := range simplifiedASTs {
+		var importedPkgs []string
+		var sourceURI string
+
+		if fileNode.Position != nil {
+			sourceURI = strings.TrimPrefix(fileNode.Position.URI, "file://")
+		} else {
+			continue // skip if file has no position info
+		}
+
+		for _, child := range fileNode.Children {
+			if child.Type == "Import" {
+				importPath := strings.Trim(child.Name, `"`)
+				importedPkgs = append(importedPkgs, importPath)
+			}
+		}
+
+		for _, pkg := range importedPkgs {
+			requiredURI, ok := packageToFile[path.Base(pkg)]
+			if !ok || requiredURI == sourceURI {
+				continue
+			}
+
+			sourceID := toNodeID(sourceURI) + ".go"
+			targetID := toNodeID(requiredURI) + ".go"
+
+			edges = append(edges, GraphEdge{
+				Data: EdgeData{
+					ID:     sourceID + "_requires_" + targetID,
+					Label:  "requires",
+					Source: sourceID,
+					Target: targetID,
+					Properties: map[string]string{
+						"imported": pkg,
+					},
+				},
+			})
+		}
+	}
+
+	return edges
 }
 
 func GenerateAllEdges(
@@ -751,6 +804,10 @@ func GenerateAllEdges(
 	// Generate "uses" edges
 	usesEdges := GenerateOperationUsesVariableEdges(simplifiedASTs, symbols)
 	allEdges = append(allEdges, usesEdges...)
+
+	// Generate "requires" edges
+	requiresEdges := GenerateRequiresEdges(simplifiedASTs)
+	allEdges = append(allEdges, requiresEdges...)
 
 	return allEdges
 }
