@@ -633,6 +633,73 @@ func GenerateFileDeclaresScopeEdges(simplifiedASTs map[string]*SimplifiedASTNode
 	return edges
 }
 
+func GenerateOperationUsesVariableEdges(
+	simplifiedASTs map[string]*SimplifiedASTNode,
+	symbols map[string]*ModifiedDefinitionInfo,
+) []GraphEdge {
+	var edges []GraphEdge
+
+	for _, fileNode := range simplifiedASTs {
+		for _, node := range fileNode.Children {
+			if node.Type != "Function" && node.Type != "Method" {
+				continue
+			}
+			if node.DeclaredAt == nil {
+				continue
+			}
+
+			sourceKey := fmt.Sprintf("%s:%d:%d", node.DeclaredAt.URI, node.DeclaredAt.Line, 0)
+			operationID := toNodeID(sourceKey)
+
+			var uses []*SimplifiedASTNode
+			collectUses(node, &uses)
+
+			for _, use := range uses {
+				if use.DeclaredAt == nil {
+					continue
+				}
+
+				adjustedLine := use.DeclaredAt.Line - 1
+				adjustedChar := use.DeclaredAt.Character - 1
+				varPosKey := fmt.Sprintf("%s:%d:%d", use.DeclaredAt.URI, adjustedLine, adjustedChar)
+				varID := toNodeID(varPosKey)
+
+				edges = append(edges, GraphEdge{
+					Data: EdgeData{
+						ID:     operationID + "_uses_" + varID,
+						Label:  "uses",
+						Source: operationID,
+						Target: varID,
+						Properties: map[string]string{
+							"line":      fmt.Sprintf("%d", use.Position.Line),
+							"character": fmt.Sprintf("%d", use.Position.Character),
+						},
+					},
+				})
+			}
+		}
+	}
+
+	return edges
+}
+
+func collectUses(node *SimplifiedASTNode, out *[]*SimplifiedASTNode) {
+	if node.Type == "VarUse" || node.Type == "FieldUse" {
+		*out = append(*out, node)
+	}
+	for _, child := range node.Children {
+		collectUses(child, out)
+	}
+}
+
+func findDeclaredID(opNode *SimplifiedASTNode, symbols map[string]*ModifiedDefinitionInfo) string {
+	if opNode.DeclaredAt == nil {
+		return ""
+	}
+	key := fmt.Sprintf("%s:%d:%d", opNode.DeclaredAt.URI, opNode.DeclaredAt.Line, opNode.DeclaredAt.Character)
+	return toNodeID(key)
+}
+
 func GenerateAllEdges(
 	simplifiedASTs map[string]*SimplifiedASTNode,
 	symbols map[string]*ModifiedDefinitionInfo,
@@ -680,6 +747,10 @@ func GenerateAllEdges(
 	// Generate Scope "encloses" Type edges
 	scopeEnclosesTypeEdges := GenerateScopeEnclosesTypeEdges(symbols)
 	allEdges = append(allEdges, scopeEnclosesTypeEdges...)
+
+	// Generate "uses" edges
+	usesEdges := GenerateOperationUsesVariableEdges(simplifiedASTs, symbols)
+	allEdges = append(allEdges, usesEdges...)
 
 	return allEdges
 }

@@ -825,9 +825,15 @@ func newResolvedNode(kind, name string, fset *token.FileSet, path string, pos to
 	node := newNode(kind, name, fset, path, pos, obj)
 	if obj != nil {
 		position := fset.Position(obj.Pos())
+
+		absPath, err := filepath.Abs(position.Filename)
+		if err != nil {
+			absPath = position.Filename
+		}
+
 		node.DeclaredAt = &ModifiedDefinitionInfo{
 			Name:         obj.Name(),
-			URI:          filepath.ToSlash(position.Filename), // no "file://" prefix
+			URI:          "file://" + filepath.ToSlash(absPath),
 			Line:         position.Line,
 			Character:    position.Column,
 			Kind:         objectKind(obj),
