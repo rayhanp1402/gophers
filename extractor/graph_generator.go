@@ -53,6 +53,19 @@ func GenerateGraphNodes(
 	nodes := []GraphNode{}
 	seen := map[string]bool{}
 
+	// Add Project node
+	projectNodeID := "project:" + toNodeID(sourceRoot)
+	nodes = append(nodes, GraphNode{
+		Data: NodeData{
+			ID:     projectNodeID,
+			Labels: []string{"Project"},
+			Properties: map[string]string{
+				"qualifiedName": filepath.ToSlash(sourceRoot),
+				"simpleName":    filepath.Base(sourceRoot),
+			},
+		},
+	})
+
 	// Walk the file tree to generate folder/file nodes
 	err := filepath.Walk(sourceRoot, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -753,6 +766,50 @@ func GenerateRequiresEdges(
 	return edges
 }
 
+func GenerateProjectIncludesEdges(sourceRoot string) ([]GraphEdge, error) {
+	projectNodeID := "project:" + toNodeID(sourceRoot)
+	edges := []GraphEdge{}
+
+	err := filepath.Walk(sourceRoot, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Only include .go files and directories
+		if !info.IsDir() && filepath.Ext(path) != ".go" {
+			return nil
+		}
+
+		targetID := ""
+		if info.IsDir() {
+			targetID = strings.ReplaceAll(toNodeID(path), ".", "/")
+		} else {
+			targetID = strings.ReplaceAll(toNodeID(path), ".", "/") + ".go"
+		}
+
+		edgeID := projectNodeID + "_includes_" + targetID
+
+		edges = append(edges, GraphEdge{
+			Data: EdgeData{
+				ID:     edgeID,
+				Label:  "includes",
+				Source: projectNodeID,
+				Target: targetID,
+				Properties: map[string]string{
+					"type": "includes",
+				},
+			},
+		})
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return edges, nil
+}
+
 func GenerateAllEdges(
 	simplifiedASTs map[string]*SimplifiedASTNode,
 	symbols map[string]*ModifiedDefinitionInfo,
@@ -808,6 +865,10 @@ func GenerateAllEdges(
 	// Generate "requires" edges
 	requiresEdges := GenerateRequiresEdges(simplifiedASTs)
 	allEdges = append(allEdges, requiresEdges...)
+
+	// Generate Project "includes" Files/Folders
+	projectRequiresFilesFoldersEdges, err := GenerateProjectIncludesEdges(sourceRoot)
+	allEdges = append(allEdges, projectRequiresFilesFoldersEdges...)
 
 	return allEdges
 }
