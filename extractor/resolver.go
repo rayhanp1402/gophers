@@ -552,40 +552,15 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 
 	var walk func(node *SimplifiedASTNode, parentType string)
 	walk = func(node *SimplifiedASTNode, parentType string) {
-		if node == nil {
+		if node == nil || node.Position == nil {
 			return
 		}
 
-		if node.Position == nil && parentType != "File" {
-			return
-		}
-
-		// Use the position for ID when available
-		var posKey string
-		if node.Position != nil {
-			posKey = fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
-		}
+		posKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
 
 		switch node.Type {
-		case "File":
-			// Use file path as the position key if node.Position is nil
-			uri := ""
-			if node.Position != nil {
-				uri = node.Position.URI
-			} else if len(node.Children) > 0 && node.Children[0].Position != nil {
-				uri = node.Children[0].Position.URI
-			}
-			posKey = uri + ":0:0"
-			symbols[posKey] = &ModifiedDefinitionInfo{
-				Name:      node.Name,
-				Kind:      "file",
-				URI:       uri,
-				Line:      0,
-				Character: 0,
-			}
-
 		case "Package":
-			if node.Name != "" && node.Position != nil {
+			if node.Name != "" {
 				symbols[posKey] = &ModifiedDefinitionInfo{
 					Name:      node.Name,
 					Kind:      "package",
@@ -601,6 +576,7 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 
 			if node.Type == "Method" {
 				kind = "method"
+				// look for Receiver node
 				for _, child := range node.Children {
 					if child.Type == "Receiver" {
 						for _, fieldList := range child.Children {
@@ -634,17 +610,21 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 				if field.Type == "Field" {
 					var fieldType string
 
+					// Find the type from Field's children (e.g., Ident or SelectorExpr)
 					for _, sub := range field.Children {
 						if sub.Type == "Ident" || sub.Type == "SelectorExpr" {
 							fieldType = sub.Name
 						}
 					}
 
+					// Now find the identifier(s) that use this type
 					for _, sub := range field.Children {
 						if sub.Type == "Ident" && sub.Position != nil {
+							// Skip if it's the type, already used
 							if sub.Name == fieldType {
 								continue
 							}
+
 							identKey := fmt.Sprintf("%s:%d:%d", sub.Position.URI, sub.Position.Line, sub.Position.Character)
 							symbols[identKey] = &ModifiedDefinitionInfo{
 								Name:      sub.Name,
@@ -661,7 +641,7 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 
 		case "GlobalVar":
 			for _, child := range node.Children {
-				if child.Type == "Ident" && child.Position != nil {
+				if child.Type == "Ident" {
 					childKey := fmt.Sprintf("%s:%d:%d", child.Position.URI, child.Position.Line, child.Position.Character)
 					symbols[childKey] = &ModifiedDefinitionInfo{
 						Name:      child.Name,
