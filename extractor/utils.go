@@ -40,6 +40,7 @@ func WriteSymbolTableToFile(symbolTable map[string]*ModifiedDefinitionInfo, outp
 		fmt.Fprintf(file, "  URI: %s\n", info.URI)
 		fmt.Fprintf(file, "  Line: %d, Character: %d\n", info.Line, info.Character)
 		fmt.Fprintf(file, "  Receiver Type: %s\n\n", info.ReceiverType)
+		fmt.Fprintf(file, "  Package Name: %s\n\n", info.PackageName)
 	}
 
 	return nil
