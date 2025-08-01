@@ -257,24 +257,13 @@ func GenerateReturnsEdges(
 ) []GraphEdge {
 	var edges []GraphEdge
 
-	// Build a map of defined type names to their node IDs
-	typeNodeMap := map[string]string{}
-	for _, def := range symbols {
-		if def.Kind == "type" || def.Kind == "struct" || def.Kind == "interface" {
-			if isPrimitiveType(def.Name) {
-				continue
-			}
-			posKey := fmt.Sprintf("%s:%d:%d", def.URI, def.Line, def.Character)
-			nodeID := toNodeID(posKey)
-			typeNodeMap[def.Name] = nodeID
-		}
-	}
-
-	// Walk through all simplified ASTs to find return edges
 	for _, root := range simplifiedASTs {
 		var walk func(node *SimplifiedASTNode)
 		walk = func(node *SimplifiedASTNode) {
 			if node.Type == "Function" || node.Type == "Method" {
+				if node.Position == nil {
+					return
+				}
 				sourceKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
 				sourceID := toNodeID(sourceKey)
 
@@ -282,24 +271,28 @@ func GenerateReturnsEdges(
 					if child.Type == "Results" {
 						for _, result := range child.Children {
 							for _, ident := range result.Children {
-								if ident.Type == "Ident" && ident.Name != "" {
-									if isPrimitiveType(ident.Name) {
-										continue
-									}
-									if targetID, ok := typeNodeMap[ident.Name]; ok {
-										edgeID := fmt.Sprintf("%s->%s.returns", sourceID, targetID)
-										edges = append(edges, GraphEdge{
-											Data: EdgeData{
-												ID:     edgeID,
-												Label:  "returns",
-												Source: sourceID,
-												Target: targetID,
-												Properties: map[string]string{
-													"from": node.Name,
-													"to":   ident.Name,
+								if ident.Type == "Ident" && ident.Position != nil {
+									key := fmt.Sprintf("%s:%d:%d", ident.Position.URI, ident.Position.Line, ident.Position.Character)
+									if def, ok := symbols[key]; ok {
+										if def.Kind == "type" || def.Kind == "struct" || def.Kind == "interface" {
+											if isPrimitiveType(def.Name) {
+												continue
+											}
+											targetID := toNodeID(key)
+											edgeID := fmt.Sprintf("%s->%s.returns", sourceID, targetID)
+											edges = append(edges, GraphEdge{
+												Data: EdgeData{
+													ID:     edgeID,
+													Label:  "returns",
+													Source: sourceID,
+													Target: targetID,
+													Properties: map[string]string{
+														"from": node.Name,
+														"to":   def.Name,
+													},
 												},
-											},
-										})
+											})
+										}
 									}
 								}
 							}
@@ -307,7 +300,6 @@ func GenerateReturnsEdges(
 					}
 				}
 			}
-
 			for _, child := range node.Children {
 				walk(child)
 			}
@@ -331,7 +323,6 @@ func GenerateParameterizesEdges(
 				if node.Position == nil {
 					return
 				}
-
 				funcKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
 				funcID := toNodeID(funcKey)
 
@@ -341,19 +332,21 @@ func GenerateParameterizesEdges(
 							for _, ident := range field.Children {
 								if ident.Type == "Ident" && ident.Position != nil {
 									paramKey := fmt.Sprintf("%s:%d:%d", ident.Position.URI, ident.Position.Line, ident.Position.Character)
-									paramID := toNodeID(paramKey)
+									if def, ok := symbols[paramKey]; ok && def.Kind == "param" {
+										paramID := toNodeID(paramKey)
 
-									edges = append(edges, GraphEdge{
-										Data: EdgeData{
-											ID:     fmt.Sprintf("%s->%s.parameterizes", paramID, funcID),
-											Label:  "parameterizes",
-											Source: paramID,
-											Target: funcID,
-											Properties: map[string]string{
-												"name": ident.Name,
+										edges = append(edges, GraphEdge{
+											Data: EdgeData{
+												ID:     fmt.Sprintf("%s->%s.parameterizes", paramID, funcID),
+												Label:  "parameterizes",
+												Source: paramID,
+												Target: funcID,
+												Properties: map[string]string{
+													"name": def.Name,
+												},
 											},
-										},
-									})
+										})
+									}
 								}
 							}
 						}
