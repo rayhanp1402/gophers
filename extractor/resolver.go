@@ -71,31 +71,26 @@ func LoadTypesInfo(
 	files map[string]*ast.File,
 	absPath string,
 ) (*types.Info, *types.Package, error) {
-	modRoot, err := findGoModRoot(absPath)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to find go.mod root: %w", err)
-	}
-
 	cfg := &packages.Config{
 		Mode:  packages.NeedName | packages.NeedImports | packages.NeedTypes,
 		Fset:  fset,
-		Dir:   modRoot,
+		Dir:   absPath,
 		Tests: false,
 	}
 
 	pkgs, err := packages.Load(cfg, "./...")
 	if err != nil || len(pkgs) == 0 {
-		return nil, nil, fmt.Errorf("failed to load package: %w", err)
+		return nil, nil, fmt.Errorf("failed to load packages: %w", err)
 	}
 
-	// Group files by their package name
+	importer := importer.ForCompiler(fset, "source", nil)
+
 	filesByPkg := map[string][]*ast.File{}
 	for _, f := range files {
 		pkgName := f.Name.Name
 		filesByPkg[pkgName] = append(filesByPkg[pkgName], f)
 	}
 
-	// Prepare a shared symbol table
 	mergedInfo := &types.Info{
 		Defs:       make(map[*ast.Ident]types.Object),
 		Uses:       make(map[*ast.Ident]types.Object),
@@ -103,7 +98,6 @@ func LoadTypesInfo(
 	}
 
 	var lastPkg *types.Package
-	importer := importer.Default()
 
 	for pkgName, fileList := range filesByPkg {
 		info := &types.Info{
@@ -126,9 +120,8 @@ func LoadTypesInfo(
 			continue
 		}
 
-		lastPkg = pkg // keep the last successfully loaded package (can be utils or main)
+		lastPkg = pkg
 
-		// Merge into unified Info
 		for k, v := range info.Defs {
 			mergedInfo.Defs[k] = v
 		}

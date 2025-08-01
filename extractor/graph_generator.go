@@ -868,7 +868,9 @@ func GenerateAllEdges(
 
 	// Generate Project "includes" Files/Folders
 	projectRequiresFilesFoldersEdges, err := GenerateProjectIncludesEdges(sourceRoot)
-	allEdges = append(allEdges, projectRequiresFilesFoldersEdges...)
+	if err == nil {
+		allEdges = append(allEdges, projectRequiresFilesFoldersEdges...)
+	}
 
 	return allEdges
 }
