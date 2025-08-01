@@ -121,7 +121,8 @@ func GenerateGraphNodes(
 
 	// Add declaration nodes (functions, types, fields, etc.)
 	for _, def := range symbols {
-		if def.Kind == "local" {
+		// Only skip local definitions that are not param/field/var
+		if def.Kind == "local" && def.Kind != "param" && def.Kind != "field" && def.Kind != "var" {
 			continue
 		}
 
@@ -132,14 +133,15 @@ func GenerateGraphNodes(
 			continue
 		}
 
+		// Only skip primitive *types*
+		if isPrimitiveType(def.Name) && (def.Kind == "type" || def.Kind == "struct" || def.Kind == "interface") {
+			continue
+		}
+
 		properties := map[string]string{
 			"simpleName":    def.Name,
 			"qualifiedName": posKey,
 			"kind":          def.Kind,
-		}
-
-		if isPrimitiveType(def.Name) {
-			continue
 		}
 
 		nodes = append(nodes, GraphNode{
