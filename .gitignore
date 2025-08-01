@@ -1,2 +1,4 @@
 /out
 /parsed_metadata
+/intermediate_representation
+/symbol_table.txt

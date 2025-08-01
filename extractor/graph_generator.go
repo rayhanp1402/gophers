@@ -2,7 +2,14 @@ package extractor
 
 import (
 	"fmt"
+	"go/ast"
+	"os"
+	"path"
 	"path/filepath"
+	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 type Graph struct {
@@ -36,429 +43,262 @@ type EdgeData struct {
 	Properties map[string]string `json:"properties"`
 }
 
-func GenerateNodes(projects []ProjectNode) []GraphNode {
-	var nodes []GraphNode
-	idCounter := 1
+func GenerateGraphNodes(
+	sourceRoot string,
+	files map[string]*ast.File,
+	symbols map[string]*ModifiedDefinitionInfo,
+	simplifiedASTs map[string]*SimplifiedASTNode,
+) ([]GraphNode, error) {
 
-	projectSeen := make(map[string]bool)
-	packageSeen := make(map[string]bool)
+	nodes := []GraphNode{}
+	seen := map[string]bool{}
 
-	for _, project := range projects {
-		projectID := toNodeID(project.Name)
+	// Add Project node
+	projectNodeID := "project:" + toNodeID(sourceRoot)
+	nodes = append(nodes, GraphNode{
+		Data: NodeData{
+			ID:     projectNodeID,
+			Labels: []string{"Project"},
+			Properties: map[string]string{
+				"qualifiedName": filepath.ToSlash(sourceRoot),
+				"simpleName":    filepath.Base(sourceRoot),
+			},
+		},
+	})
 
-		// Add project node
-		if !projectSeen[projectID] {
-			nodes = append(nodes, GraphNode{
-				Data: NodeData{
-					ID:     projectID,
-					Labels: []string{"Project"},
-					Properties: map[string]string{
-						"simpleName":    project.Name,
-						"qualifiedName": project.Name,
-						"kind":          "project",
-					},
-				},
-			})
-			projectSeen[projectID] = true
+	// Walk the file tree to generate folder/file nodes
+	err := filepath.Walk(sourceRoot, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
 		}
 
-		// Iterate packages inside project
-		for _, pkg := range project.Packages {
-			file := pkg.File
-			baseID := toNodeID(pkg.Path)
+		normalizedPath := filepath.ToSlash(path)
 
-			folderPath := filepath.ToSlash(filepath.Dir(pkg.Path))
-			if folderPath == "." {
-				folderPath = ""
-			}
+		if info.IsDir() && filepath.Base(path) == "intermediate_representation" {
+			return filepath.SkipDir
+		}
 
-			var packageID string
-			var qualifiedName string
-
-			if folderPath == "" {
-				packageID = toNodeID(pkg.Name)
-				qualifiedName = pkg.Name
-			} else {
-				packageID = toNodeID(folderPath + "." + pkg.Name)
-				qualifiedName = folderPath + "." + pkg.Name
-			}
-
-			// Add package node if not already added
-			if !packageSeen[packageID] {
+		if info.IsDir() {
+			id := toNodeID(normalizedPath)
+			if !seen[id] {
 				nodes = append(nodes, GraphNode{
 					Data: NodeData{
-						ID:     packageID,
-						Labels: []string{"Scope"},
-						Properties: map[string]string{
-							"simpleName":    pkg.Name,
-							"qualifiedName": qualifiedName,
-							"kind":          "package",
-						},
-					},
-				})
-				packageSeen[packageID] = true
-			}
-
-			// Add folder node
-			folderID := toNodeID(folderPath)
-			if folderPath != "" && !packageSeen[folderID] {
-				nodes = append(nodes, GraphNode{
-					Data: NodeData{
-						ID:     folderID,
+						ID:     id,
 						Labels: []string{"Folder"},
 						Properties: map[string]string{
-							"simpleName":    filepath.Base(folderPath),
-							"qualifiedName": folderPath,
-							"kind":          "folder",
+							"qualifiedName": normalizedPath,
+							"simpleName":    filepath.Base(normalizedPath),
 						},
 					},
 				})
-				packageSeen[folderID] = true
+				seen[id] = true
 			}
+			return nil
+		}
 
-			// Add file node
-			fileID := toNodeID(pkg.Path)
-			if !packageSeen[fileID] {
+		if filepath.Ext(path) == ".go" {
+			id := toNodeID(normalizedPath + ".go")
+			if !seen[id] {
 				nodes = append(nodes, GraphNode{
 					Data: NodeData{
-						ID:     fileID,
+						ID:     id,
 						Labels: []string{"File"},
 						Properties: map[string]string{
-							"simpleName":    filepath.Base(pkg.Path),
-							"qualifiedName": pkg.Path,
-							"kind":          "file",
+							"qualifiedName": normalizedPath,
+							"simpleName":    filepath.Base(normalizedPath),
 						},
 					},
 				})
-				packageSeen[fileID] = true
-			}
-
-			// Add structs, interfaces, functions, methods, variables as before
-			for _, s := range file.Structs {
-				node := GraphNode{
-					Data: NodeData{
-						ID:     baseID + "." + s.Name,
-						Labels: []string{"Type"},
-						Properties: map[string]string{
-							"simpleName":    s.Name,
-							"qualifiedName": baseID + "." + s.Name,
-							"kind":          "struct",
-						},
-					},
-				}
-				idCounter++
-				nodes = append(nodes, node)
-
-				// Add struct field nodes
-				for _, fieldName := range s.Fields {
-					fieldID := baseID + "." + s.Name + "." + fieldName
-					nodes = append(nodes, GraphNode{
-						Data: NodeData{
-							ID:     fieldID,
-							Labels: []string{"Variable"},
-							Properties: map[string]string{
-								"simpleName":    fieldName,
-								"qualifiedName": fieldID,
-								"kind":          "field",
-								"struct":        s.Name,
-							},
-						},
-					})
-				}
-			}
-
-			for _, iface := range file.Interfaces {
-				node := GraphNode{
-					Data: NodeData{
-						ID:     baseID + "." + iface.Name,
-						Labels: []string{"Type"},
-						Properties: map[string]string{
-							"simpleName":    iface.Name,
-							"qualifiedName": baseID + "." + iface.Name,
-							"kind":          "interface",
-						},
-					},
-				}
-				idCounter++
-				nodes = append(nodes, node)
-			}
-
-			for _, fn := range file.Functions {
-				node := GraphNode{
-					Data: NodeData{
-						ID:     baseID + "." + fn.Name,
-						Labels: []string{"Operation"},
-						Properties: map[string]string{
-							"simpleName":    fn.Name,
-							"qualifiedName": baseID + "." + fn.Name,
-							"kind":          "function",
-						},
-					},
-				}
-				idCounter++
-				nodes = append(nodes, node)
-
-				// Add parameter nodes
-				for paramName, typeName := range fn.Params {
-					paramID := baseID + "." + paramName
-					nodes = append(nodes, GraphNode{
-						Data: NodeData{
-							ID:     paramID,
-							Labels: []string{"Variable"},
-							Properties: map[string]string{
-								"simpleName":    paramName,
-								"qualifiedName": paramID,
-								"kind":          "variable",
-								"type":          typeName,
-								"function":      fn.Name,
-							},
-						},
-					})
-				}
-			}
-
-			for _, m := range file.Methods {
-				node := GraphNode{
-					Data: NodeData{
-						ID:     baseID + "." + m.Name,
-						Labels: []string{"Operation"},
-						Properties: map[string]string{
-							"simpleName":    m.Name,
-							"qualifiedName": baseID + "." + m.Name,
-							"kind":          "method",
-						},
-					},
-				}
-				idCounter++
-				nodes = append(nodes, node)
-
-				// Add parameter nodes
-				for paramName, typeName := range m.Params {
-					paramID := baseID + "." + paramName
-					nodes = append(nodes, GraphNode{
-						Data: NodeData{
-							ID:     paramID,
-							Labels: []string{"Variable"},
-							Properties: map[string]string{
-								"simpleName":    paramName,
-								"qualifiedName": paramID,
-								"kind":          "variable",
-								"type":          typeName,
-								"function":      m.Name,
-							},
-						},
-					})
-				}
-			}
-
-			for _, v := range file.Variables {
-				node := GraphNode{
-					Data: NodeData{
-						ID:     baseID + "." + v.Name,
-						Labels: []string{"Variable"},
-						Properties: map[string]string{
-							"simpleName":    v.Name,
-							"qualifiedName": baseID + "." + v.Name,
-							"kind":          "variable",
-						},
-					},
-				}
-				nodes = append(nodes, node)
+				seen[id] = true
 			}
 		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	return nodes
-}
-
-func GenerateEdges(projects []ProjectNode) []GraphEdge {
-	var edges []GraphEdge
-	counter := 1
-	seen := make(map[string]struct{})
-
-	allVariableIDs := make(map[string]struct{})
-	globalVars := make(map[string]struct{})
-	declToFile := make(map[string]string) // Map from identifier ID to file path
-
-	skipGlobalScope := func(scope string) bool {
-		return extractFunctionName(scope) == "global"
-	}
-
-	addEdge := func(sourceID, targetID, label string) {
-		key := fmt.Sprintf("%s|%s|%s", sourceID, targetID, label)
-		if _, exists := seen[key]; exists {
-			return
+	// Add declaration nodes (functions, types, fields, etc.)
+	for _, def := range symbols {
+		if def.Kind == "local" {
+			continue
 		}
-		seen[key] = struct{}{}
-		edges = append(edges, GraphEdge{
-			Data: EdgeData{
-				ID:         fmt.Sprintf("edge%d", counter),
-				Label:      label,
-				Source:     sourceID,
-				Target:     targetID,
-				Properties: map[string]string{},
+
+		posKey := fmt.Sprintf("%s:%d:%d", def.URI, def.Line, def.Character)
+		id := toNodeID(posKey)
+
+		if seen[id] {
+			continue
+		}
+
+		properties := map[string]string{
+			"simpleName":    def.Name,
+			"qualifiedName": posKey,
+			"kind":          def.Kind,
+		}
+
+		if isPrimitiveType(def.Name) {
+			continue
+		}
+
+		nodes = append(nodes, GraphNode{
+			Data: NodeData{
+				ID:         id,
+				Labels:     KindToLabel(def.Kind),
+				Properties: properties,
 			},
 		})
-		counter++
+		seen[id] = true
 	}
 
-	for _, project := range projects {
-		projectID := toNodeID(project.Name)
-		rootDirs := make(map[string]struct{})
-		rootFiles := make(map[string]struct{})
+	// Add package nodes as Scope
+	addedPackages := map[string]bool{}
+	for _, root := range simplifiedASTs {
+		for _, child := range root.Children {
+			if child.Type == "Package" && child.Name != "" {
+				pkgName := child.Name
+				pkgPath := filepath.ToSlash(strings.TrimPrefix(child.Position.URI, "file://"))
+				dir := filepath.Dir(pkgPath)
+				qualified := fmt.Sprintf("%s/%s", dir, pkgName)
 
-		for _, pkg := range project.Packages {
-			file := pkg.File
-			baseID := toNodeID(pkg.Path)
-
-			folderPath := filepath.ToSlash(filepath.Dir(pkg.Path))
-			if folderPath == "." {
-				folderPath = ""
-			}
-
-			var packageID string
-			if folderPath == "" {
-				packageID = toNodeID(pkg.Name)
-			} else {
-				packageID = toNodeID(folderPath + "." + pkg.Name)
-			}
-
-			fileID := toNodeID(pkg.Path)
-			folderID := toNodeID(folderPath)
-
-			if folderPath == "" {
-				rootFiles[pkg.Path] = struct{}{}
-			} else {
-				rootDirs[folderPath] = struct{}{}
-			}
-			for dir := range rootDirs {
-				addEdge(projectID, toNodeID(dir), "includes")
-			}
-			for file := range rootFiles {
-				addEdge(projectID, toNodeID(file), "includes")
-			}
-
-			if folderPath != "" {
-				parent := filepath.ToSlash(filepath.Dir(folderPath))
-				if parent == "." {
-					parent = ""
-				}
-				if parent != "" {
-					addEdge(toNodeID(parent), folderID, "contains")
-				}
-				addEdge(folderID, fileID, "contains")
-			}
-
-			addEdge(fileID, packageID, "declares")
-			for _, fn := range file.Functions {
-				fnID := baseID + "." + fn.Name
-				declToFile[fnID] = pkg.Path
-				addEdge(fileID, fnID, "declares")
-			}
-			for _, m := range file.Methods {
-				mID := baseID + "." + m.Name
-				declToFile[mID] = pkg.Path
-				addEdge(fileID, mID, "declares")
-			}
-
-			for _, v := range file.Variables {
-				varID := baseID + "." + v.Name
-				allVariableIDs[varID] = struct{}{}
-				declToFile[varID] = pkg.Path
-
-				if v.Position.Column == 1 {
-					globalVars[varID] = struct{}{}
-					addEdge(fileID, varID, "declares")
+				id := toNodeID(qualified)
+				if !addedPackages[id] {
+					nodes = append(nodes, GraphNode{
+						Data: NodeData{
+							ID:     id + ".package",
+							Labels: []string{"Scope"},
+							Properties: map[string]string{
+								"qualifiedName": qualified + ".package",
+								"simpleName":    pkgName,
+							},
+						},
+					})
+					addedPackages[id] = true
 				}
 			}
+		}
+	}
 
-			for _, s := range file.Structs {
-				addEdge(packageID, baseID+"."+s.Name, "encloses")
-			}
-			for _, i := range file.Interfaces {
-				addEdge(packageID, baseID+"."+i.Name, "encloses")
+	return nodes, nil
+}
+
+func KindToLabel(kind string) []string {
+    switch kind {
+    case "field", "var", "param":
+        return []string{"Variable"}
+    case "func", "method":
+        return []string{"Operation", "Type"}
+    case "type", "struct", "interface":
+        return []string{"Type"}
+    default:
+        c := cases.Title(language.English)
+        return []string{c.String(kind)}
+    }
+}
+
+func GenerateInvokesEdges(
+	simplifiedASTs map[string]*SimplifiedASTNode,
+	symbols map[string]*ModifiedDefinitionInfo,
+) []GraphEdge {
+	var edges []GraphEdge
+
+	// Traverse all simplified ASTs
+	for _, root := range simplifiedASTs {
+		var currentFuncID string
+
+		var walk func(node *SimplifiedASTNode)
+		walk = func(node *SimplifiedASTNode) {
+			if node == nil {
+				return
 			}
 
-			for _, m := range file.Methods {
-				if m.Receiver != "" {
-					addEdge(baseID+"."+m.Name, baseID+"."+m.Receiver, "instantiates")
+			switch node.Type {
+			case "Function", "Method":
+				funcKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
+				currentFuncID = toNodeID(funcKey)
+				// Walk children (body, params, etc.) with currentFuncID
+				for _, child := range node.Children {
+					walk(child)
 				}
-			}
+				currentFuncID = "" // Clear after done
 
-			for _, fn := range file.Functions {
-				fnID := baseID + "." + fn.Name
-				for _, retType := range fn.Returns {
-					if retType != "" {
-						typeID := baseID + "." + retType
-						addEdge(fnID, typeID, "returns")
+			case "Call", "MethodCall":
+				if node.Name == "" || node.Position == nil || currentFuncID == "" {
+					return
+				}
+				// Try to resolve callee name from symbol table
+				for symPosKey, def := range symbols {
+					if def.Name == node.Name && (def.Kind == "func" || def.Kind == "method") {
+						targetID := toNodeID(symPosKey)
+						AddEdge(&edges, currentFuncID, targetID, "invokes", nil)
+						break // Stop after first match
 					}
 				}
-			}
-			for _, m := range file.Methods {
-				mID := baseID + "." + m.Name
-				for _, retType := range m.Returns {
-					if retType != "" {
-						typeID := baseID + "." + retType
-						addEdge(mID, typeID, "returns")
-					}
+
+			default:
+				for _, child := range node.Children {
+					walk(child)
 				}
 			}
+		}
 
-			for _, iface := range file.Interfaces {
-				typeID := baseID + "." + iface.Name
-				for _, methodName := range iface.Methods {
-					methodID := baseID + "." + methodName
-					addEdge(typeID, methodID, "encapsulates")
-				}
-			}
+		walk(root)
+	}
 
-			for _, s := range file.Structs {
-				for _, field := range s.Fields {
-					fieldID := baseID + "." + s.Name + "." + field
-					structID := baseID + "." + s.Name
-					addEdge(structID, fieldID, "encapsulates")
-				}
-			}
+	return edges
+}
 
-			structIDs := make(map[string]struct{})
-			for _, s := range file.Structs {
-				structIDs[baseID+"."+s.Name] = struct{}{}
-			}
-			for _, v := range file.Variables {
-				if typ, ok := v.Params["type"]; ok {
-					typeID := baseID + "." + typ
-					if _, isStruct := structIDs[typeID]; isStruct {
-						addEdge(baseID+"."+v.Name, typeID, "typed")
-					}
-				}
-			}
+func GenerateReturnsEdges(
+	simplifiedASTs map[string]*SimplifiedASTNode,
+	symbols map[string]*ModifiedDefinitionInfo,
+) []GraphEdge {
+	var edges []GraphEdge
 
-			for _, fn := range file.Functions {
-				for param := range fn.Params {
-					addEdge(baseID+"."+param, baseID+"."+fn.Name, "parameterizes")
-				}
+	// Build a map of defined type names to their node IDs
+	typeNodeMap := map[string]string{}
+	for _, def := range symbols {
+		if def.Kind == "type" || def.Kind == "struct" || def.Kind == "interface" {
+			if isPrimitiveType(def.Name) {
+				continue
 			}
-			for _, m := range file.Methods {
-				for param := range m.Params {
-					addEdge(baseID+"."+param, baseID+"."+m.Name, "parameterizes")
-				}
-			}
+			posKey := fmt.Sprintf("%s:%d:%d", def.URI, def.Line, def.Character)
+			nodeID := toNodeID(posKey)
+			typeNodeMap[def.Name] = nodeID
+		}
+	}
 
-			processUsages := func(opID string, usages []Usage, targetName string) {
-				for _, usage := range usages {
-					if skipGlobalScope(usage.Scope) {
-						continue
-					}
-					targetID := toNodeID(usage.Path) + "." + targetName
-					if _, isVar := allVariableIDs[targetID]; isVar {
-						if targetID != opID {
-							addEdge(opID, targetID, "uses")
+	// Walk through all simplified ASTs to find return edges
+	for _, root := range simplifiedASTs {
+		var walk func(node *SimplifiedASTNode)
+		walk = func(node *SimplifiedASTNode) {
+			if node.Type == "Function" || node.Type == "Method" {
+				sourceKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
+				sourceID := toNodeID(sourceKey)
 
-							sourceFileID := toNodeID(pkg.Path)
-							if targetPath, ok := declToFile[targetID]; ok {
-								targetFileID := toNodeID(targetPath)
-								if sourceFileID != targetFileID {
-									addEdge(sourceFileID, targetFileID, "requires")
+				for _, child := range node.Children {
+					if child.Type == "Results" {
+						for _, result := range child.Children {
+							for _, ident := range result.Children {
+								if ident.Type == "Ident" && ident.Name != "" {
+									if isPrimitiveType(ident.Name) {
+										continue
+									}
+									if targetID, ok := typeNodeMap[ident.Name]; ok {
+										edgeID := fmt.Sprintf("%s->%s.returns", sourceID, targetID)
+										edges = append(edges, GraphEdge{
+											Data: EdgeData{
+												ID:     edgeID,
+												Label:  "returns",
+												Source: sourceID,
+												Target: targetID,
+												Properties: map[string]string{
+													"from": node.Name,
+													"to":   ident.Name,
+												},
+											},
+										})
+									}
 								}
 							}
 						}
@@ -466,92 +306,590 @@ func GenerateEdges(projects []ProjectNode) []GraphEdge {
 				}
 			}
 
-			for _, fn := range file.Functions {
-				fnID := baseID + "." + fn.Name
-				for _, usage := range fn.Usages {
-					processUsages(fnID, []Usage{usage}, usage.Scope)
-				}
+			for _, child := range node.Children {
+				walk(child)
 			}
-			for _, m := range file.Methods {
-				mID := baseID + "." + m.Name
-				for _, usage := range m.Usages {
-					processUsages(mID, []Usage{usage}, usage.Scope)
-				}
-			}
+		}
+		walk(root)
+	}
 
-			for _, v := range file.Variables {
-				varID := baseID + "." + v.Name
-				for _, usage := range v.Usages {
-					if skipGlobalScope(usage.Scope) {
-						continue
-					}
+	return edges
+}
 
-					userID := toNodeID(pkg.Path) + "." + extractFunctionName(usage.Scope)
-					if userID == varID {
-						fmt.Println("❌ Skipping self-edge")
-						continue
-					}
+func GenerateParameterizesEdges(
+	simplifiedASTs map[string]*SimplifiedASTNode,
+	symbols map[string]*ModifiedDefinitionInfo,
+) []GraphEdge {
+	var edges []GraphEdge
 
-					addEdge(userID, varID, "uses")
-
-					sourceFileID := toNodeID(pkg.Path)
-					if targetPath, ok := declToFile[varID]; ok {
-						targetFileID := toNodeID(targetPath)
-						if sourceFileID != targetFileID {
-							addEdge(sourceFileID, targetFileID, "requires")
-						}
-					}
+	for _, root := range simplifiedASTs {
+		var walk func(node *SimplifiedASTNode)
+		walk = func(node *SimplifiedASTNode) {
+			if node.Type == "Function" || node.Type == "Method" {
+				if node.Position == nil {
+					return
 				}
 
-				if _, isGlobal := globalVars[varID]; !isGlobal && len(v.Usages) == 0 {
-					declaringFunc := toNodeID(pkg.Path) + "." + extractFunctionName(v.Scope)
-					if declaringFunc != varID {
-						addEdge(declaringFunc, varID, "uses")
-					}
-				}
-			}
+				funcKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
+				funcID := toNodeID(funcKey)
 
-			interfaceMethods := make(map[string]struct{})
-			for _, iface := range file.Interfaces {
-				for _, method := range iface.Methods {
-					interfaceMethods[baseID+"."+method] = struct{}{}
-				}
-			}
+				for _, child := range node.Children {
+					if child.Type == "Params" {
+						for _, field := range child.Children {
+							for _, ident := range field.Children {
+								if ident.Type == "Ident" && ident.Position != nil {
+									paramKey := fmt.Sprintf("%s:%d:%d", ident.Position.URI, ident.Position.Line, ident.Position.Character)
+									paramID := toNodeID(paramKey)
 
-			processInvokes := func(opID string, usages []Usage) {
-				for _, usage := range usages {
-					if skipGlobalScope(usage.Scope) {
-						continue
-					}
-					callerID := toNodeID(usage.Path) + "." + extractFunctionName(usage.Scope)
-
-					if _, isIfaceMethod := interfaceMethods[opID]; isIfaceMethod {
-						continue
-					}
-					if callerID != opID {
-						addEdge(callerID, opID, "invokes")
-
-						sourceFileID := toNodeID(usage.Path)
-						if targetPath, ok := declToFile[opID]; ok {
-							targetFileID := toNodeID(targetPath)
-							if sourceFileID != targetFileID {
-								addEdge(sourceFileID, targetFileID, "requires")
+									edges = append(edges, GraphEdge{
+										Data: EdgeData{
+											ID:     fmt.Sprintf("%s->%s.parameterizes", paramID, funcID),
+											Label:  "parameterizes",
+											Source: paramID,
+											Target: funcID,
+											Properties: map[string]string{
+												"name": ident.Name,
+											},
+										},
+									})
+								}
 							}
 						}
 					}
 				}
 			}
-
-			for _, fn := range file.Functions {
-				fnID := baseID + "." + fn.Name
-				processInvokes(fnID, fn.Usages)
+			for _, child := range node.Children {
+				walk(child)
 			}
-			for _, m := range file.Methods {
-				mID := baseID + "." + m.Name
-				processInvokes(mID, m.Usages)
+		}
+		walk(root)
+	}
+
+	return edges
+}
+
+func GenerateTypeEncapsulatesVariableEdges(
+	simplifiedASTs map[string]*SimplifiedASTNode,
+	symbols map[string]*ModifiedDefinitionInfo,
+) []GraphEdge {
+	var edges []GraphEdge
+
+	for _, astRoot := range simplifiedASTs {
+		var walk func(node *SimplifiedASTNode)
+		walk = func(node *SimplifiedASTNode) {
+			if node.Type == "Struct" {
+				structKey := fmt.Sprintf("%s:%d:5", node.Position.URI, node.Position.Line)
+				structID := toNodeID(structKey)
+
+				for _, field := range node.Children {
+					if field.Type != "Field" {
+						continue
+					}
+					for _, ident := range field.Children {
+						if ident.Type != "Ident" {
+							continue
+						}
+						fieldKey := fmt.Sprintf("%s:%d:%d", ident.Position.URI, ident.Position.Line, ident.Position.Character)
+						fieldID := toNodeID(fieldKey)
+
+						edges = append(edges, GraphEdge{
+							Data: EdgeData{
+								ID:     fmt.Sprintf("%s->%s.encapsulates", structID, fieldID),
+								Label:  "encapsulates",
+								Source: structID,
+								Target: fieldID,
+								Properties: map[string]string{
+									"field": ident.Name,
+								},
+							},
+						})
+					}
+				}
+			}
+
+			for _, child := range node.Children {
+				walk(child)
+			}
+		}
+		walk(astRoot)
+	}
+
+	return edges
+}
+
+func GenerateTypedEdges(
+	symbols map[string]*ModifiedDefinitionInfo,
+) []GraphEdge {
+	var edges []GraphEdge
+
+	// Map all known type node positions for lookup
+	typeNodeMap := map[string]string{}
+	for key, def := range symbols {
+		if def.Kind == "struct" || def.Kind == "interface" || def.Kind == "type" {
+			typeNodeMap[def.Name] = toNodeID(key)
+		}
+	}
+
+	// For every variable symbol, check if its Type points to a known Type symbol
+	for symKey, def := range symbols {
+		if def.Kind != "param" && def.Kind != "var" && def.Kind != "field" {
+			continue
+		}
+
+		typeName := def.Type
+		if typeID, ok := typeNodeMap[typeName]; ok {
+			edges = append(edges, GraphEdge{
+				Data: EdgeData{
+					ID:     fmt.Sprintf("%s->%s.typed", toNodeID(symKey), typeID),
+					Label:  "typed",
+					Source: toNodeID(symKey),
+					Target: typeID,
+					Properties: map[string]string{
+						"type": typeName,
+					},
+				},
+			})
+		}
+	}
+
+	return edges
+}
+
+func GenerateTypeEncapsulatesOperationEdges(symbols map[string]*ModifiedDefinitionInfo) []GraphEdge {
+	var edges []GraphEdge
+
+	// Map type name → node ID
+	typeNameToID := make(map[string]string)
+	for id, sym := range symbols {
+		if sym.Kind == "struct" || sym.Kind == "interface" {
+			typeNameToID[sym.Name] = id
+		}
+	}
+
+	for id, sym := range symbols {
+		if sym.Kind == "method" && sym.ReceiverType != "" {
+			if typeID, ok := typeNameToID[sym.ReceiverType]; ok {
+				edgeID := fmt.Sprintf("%s_encapsulates_%s", typeID, id)
+
+				edges = append(edges, GraphEdge{
+					Data: EdgeData{
+						ID:         edgeID,
+						Label:      "encapsulates",
+						Source:     typeID,
+						Target:     id,
+						Properties: map[string]string{},
+					},
+				})
 			}
 		}
 	}
 
 	return edges
+}
+
+func GenerateScopeEnclosesTypeEdges(
+	symbols map[string]*ModifiedDefinitionInfo,
+) []GraphEdge {
+	var edges []GraphEdge
+
+	for _, def := range symbols {
+		if def.Kind != "struct" && def.Kind != "interface" && def.Kind != "type" {
+			continue
+		}
+
+		// Keep URI with file:// prefix for typeID
+		filePath := filepath.ToSlash(def.URI)
+		dir := filepath.Dir(strings.TrimPrefix(filePath, "file://"))
+
+		// Determine package name: if file is main.go, use "main"
+		baseName := filepath.Base(strings.TrimPrefix(filePath, "file://"))
+		pkgName := strings.TrimSuffix(baseName, ".go")
+		if pkgName == "main" {
+			pkgName = "main"
+		}
+
+		// Compose the same package ID as in GenerateGraphNodes
+		scopeQualified := fmt.Sprintf("%s/%s", dir, pkgName)
+		scopeID := toNodeID(scopeQualified + ".package")
+
+		// This keeps the file:// prefix
+		typeID := toNodeID(fmt.Sprintf("%s:%d:%d", filePath, def.Line, def.Character))
+
+		edges = append(edges, GraphEdge{
+			Data: EdgeData{
+				ID:     fmt.Sprintf("encloses:%s->%s", scopeID, typeID),
+				Label:  "encloses",
+				Source: scopeID,
+				Target: typeID,
+				Properties: map[string]string{
+					"kind": "ScopeEnclosesType",
+				},
+			},
+		})
+	}
+
+	return edges
+}
+
+func GenerateFolderContainsEdges(sourceRoot string) ([]GraphEdge, error) {
+	var edges []GraphEdge
+
+	err := filepath.Walk(sourceRoot, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if path == sourceRoot {
+			// Skip root folder
+			return nil
+		}
+
+		normalizedPath := filepath.ToSlash(path)
+		parent := filepath.Dir(normalizedPath)
+		parentID := toNodeID(filepath.ToSlash(parent))
+		childID := ""
+
+		if info.IsDir() {
+			childID = toNodeID(normalizedPath)
+		} else if filepath.Ext(path) == ".go" {
+			childID = toNodeID(normalizedPath + ".go")
+		} else {
+			return nil // Skip non-Go files
+		}
+
+		edgeID := fmt.Sprintf("%s->%s.contains", parentID, childID)
+		edges = append(edges, GraphEdge{
+			Data: EdgeData{
+				ID:     edgeID,
+				Label:  "contains",
+				Source: parentID,
+				Target: childID,
+				Properties: map[string]string{
+					"kind": "FolderContains",
+				},
+			},
+		})
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return edges, nil
+}
+
+func GenerateFileDeclaresEdges(symbols map[string]*ModifiedDefinitionInfo) []GraphEdge {
+	var edges []GraphEdge
+
+	for symKey, def := range symbols {
+		// Filter by kind
+		if def.Kind != "type" && def.Kind != "struct" && def.Kind != "interface" &&
+			def.Kind != "func" && def.Kind != "method" &&
+			def.Kind != "var" {
+			continue
+		}
+
+		// Only include global vars
+		if def.Kind == "var" && def.ReceiverType != "" {
+			continue
+		}
+
+		// File ID: file://... (no need to add ".go")
+		trimmed := strings.TrimPrefix(def.URI, "file://")
+		fileID := toNodeID(trimmed + ".go")
+		defID := toNodeID(symKey)
+
+		edgeID := fmt.Sprintf("%s->%s.declares", fileID, defID)
+		edges = append(edges, GraphEdge{
+			Data: EdgeData{
+				ID:     edgeID,
+				Label:  "declares",
+				Source: fileID,
+				Target: defID,
+				Properties: map[string]string{
+					"kind": def.Kind,
+					"name": def.Name,
+				},
+			},
+		})
+	}
+
+	return edges
+}
+
+func GenerateFileDeclaresScopeEdges(simplifiedASTs map[string]*SimplifiedASTNode) []GraphEdge {
+	var edges []GraphEdge
+
+	for _, root := range simplifiedASTs {
+		for _, child := range root.Children {
+			if child.Type == "Package" && child.Name != "" && child.Position != nil {
+				trimmed := strings.TrimPrefix(child.Position.URI, "file://")
+				fileID := toNodeID(trimmed + ".go")
+				scopePath := filepath.ToSlash(strings.TrimPrefix(child.Position.URI, "file://"))
+				dir := filepath.Dir(scopePath)
+				qualified := fmt.Sprintf("%s/%s", dir, child.Name)
+
+				scopeID := toNodeID(qualified + ".package")
+
+				edgeID := fmt.Sprintf("%s->%s.declares", fileID, scopeID)
+				edges = append(edges, GraphEdge{
+					Data: EdgeData{
+						ID:     edgeID,
+						Label:  "declares",
+						Source: fileID,
+						Target: scopeID,
+						Properties: map[string]string{
+							"kind": "Scope",
+							"name": child.Name,
+						},
+					},
+				})
+			}
+		}
+	}
+
+	return edges
+}
+
+func GenerateOperationUsesVariableEdges(
+	simplifiedASTs map[string]*SimplifiedASTNode,
+	symbols map[string]*ModifiedDefinitionInfo,
+) []GraphEdge {
+	var edges []GraphEdge
+
+	for _, fileNode := range simplifiedASTs {
+		for _, node := range fileNode.Children {
+			if node.Type != "Function" && node.Type != "Method" {
+				continue
+			}
+			if node.DeclaredAt == nil {
+				continue
+			}
+
+			sourceKey := fmt.Sprintf("%s:%d:%d", node.DeclaredAt.URI, node.DeclaredAt.Line, 0)
+			operationID := toNodeID(sourceKey)
+
+			var uses []*SimplifiedASTNode
+			collectUses(node, &uses)
+
+			for _, use := range uses {
+				if use.DeclaredAt == nil {
+					continue
+				}
+
+				adjustedLine := use.DeclaredAt.Line - 1
+				adjustedChar := use.DeclaredAt.Character - 1
+				varPosKey := fmt.Sprintf("%s:%d:%d", use.DeclaredAt.URI, adjustedLine, adjustedChar)
+				varID := toNodeID(varPosKey)
+
+				edges = append(edges, GraphEdge{
+					Data: EdgeData{
+						ID:     operationID + "_uses_" + varID,
+						Label:  "uses",
+						Source: operationID,
+						Target: varID,
+						Properties: map[string]string{
+							"line":      fmt.Sprintf("%d", use.Position.Line),
+							"character": fmt.Sprintf("%d", use.Position.Character),
+						},
+					},
+				})
+			}
+		}
+	}
+
+	return edges
+}
+
+func collectUses(node *SimplifiedASTNode, out *[]*SimplifiedASTNode) {
+	if node.Type == "VarUse" || node.Type == "FieldUse" {
+		*out = append(*out, node)
+	}
+	for _, child := range node.Children {
+		collectUses(child, out)
+	}
+}
+
+func GenerateRequiresEdges(
+	simplifiedASTs map[string]*SimplifiedASTNode,
+) []GraphEdge {
+	var edges []GraphEdge
+
+	// Map from package name to the actual file URI (from fileNode.Position.URI)
+	packageToFile := make(map[string]string)
+	for _, fileNode := range simplifiedASTs {
+		for _, child := range fileNode.Children {
+			if child.Type == "Package" {
+				// Store absolute path from the fileNode’s URI
+				uri := strings.TrimPrefix(fileNode.Position.URI, "file://")
+				packageToFile[child.Name] = uri
+			}
+		}
+	}
+
+	for _, fileNode := range simplifiedASTs {
+		var importedPkgs []string
+		var sourceURI string
+
+		if fileNode.Position != nil {
+			sourceURI = strings.TrimPrefix(fileNode.Position.URI, "file://")
+		} else {
+			continue // skip if file has no position info
+		}
+
+		for _, child := range fileNode.Children {
+			if child.Type == "Import" {
+				importPath := strings.Trim(child.Name, `"`)
+				importedPkgs = append(importedPkgs, importPath)
+			}
+		}
+
+		for _, pkg := range importedPkgs {
+			requiredURI, ok := packageToFile[path.Base(pkg)]
+			if !ok || requiredURI == sourceURI {
+				continue
+			}
+
+			sourceID := toNodeID(sourceURI) + ".go"
+			targetID := toNodeID(requiredURI) + ".go"
+
+			edges = append(edges, GraphEdge{
+				Data: EdgeData{
+					ID:     sourceID + "_requires_" + targetID,
+					Label:  "requires",
+					Source: sourceID,
+					Target: targetID,
+					Properties: map[string]string{
+						"imported": pkg,
+					},
+				},
+			})
+		}
+	}
+
+	return edges
+}
+
+func GenerateProjectIncludesEdges(sourceRoot string) ([]GraphEdge, error) {
+	projectNodeID := "project:" + toNodeID(sourceRoot)
+	edges := []GraphEdge{}
+
+	err := filepath.Walk(sourceRoot, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Only include .go files and directories
+		if !info.IsDir() && filepath.Ext(path) != ".go" {
+			return nil
+		}
+
+		targetID := ""
+		if info.IsDir() {
+			targetID = strings.ReplaceAll(toNodeID(path), ".", "/")
+		} else {
+			targetID = strings.ReplaceAll(toNodeID(path), ".", "/") + ".go"
+		}
+
+		edgeID := projectNodeID + "_includes_" + targetID
+
+		edges = append(edges, GraphEdge{
+			Data: EdgeData{
+				ID:     edgeID,
+				Label:  "includes",
+				Source: projectNodeID,
+				Target: targetID,
+				Properties: map[string]string{
+					"type": "includes",
+				},
+			},
+		})
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return edges, nil
+}
+
+func GenerateAllEdges(
+	simplifiedASTs map[string]*SimplifiedASTNode,
+	symbols map[string]*ModifiedDefinitionInfo,
+	sourceRoot string,
+) []GraphEdge {
+	var allEdges []GraphEdge
+
+	folderEdges, err := GenerateFolderContainsEdges(sourceRoot)
+	if err == nil {
+		allEdges = append(allEdges, folderEdges...)
+	}
+
+	// File declares Scope
+	scopeDeclEdges := GenerateFileDeclaresScopeEdges(simplifiedASTs)
+	allEdges = append(allEdges, scopeDeclEdges...)
+
+	// File declares Variable, Type, Operation
+	declaresEdges := GenerateFileDeclaresEdges(symbols)
+	allEdges = append(allEdges, declaresEdges...)
+
+	// Generate "invokes" edges
+	invokesEdges := GenerateInvokesEdges(simplifiedASTs, symbols)
+	allEdges = append(allEdges, invokesEdges...)
+
+	// Generate "returns" edges
+	returnsEdges := GenerateReturnsEdges(simplifiedASTs, symbols)
+	allEdges = append(allEdges, returnsEdges...)
+
+	// Generate "parameterizes" edges
+	parameterizesEdges := GenerateParameterizesEdges(simplifiedASTs, symbols)
+	allEdges = append(allEdges, parameterizesEdges...)
+
+	// Generate Type "encapsulates" Variable edges
+	typeEncapsulatesVariableEdges := GenerateTypeEncapsulatesVariableEdges(simplifiedASTs, symbols)
+	allEdges = append(allEdges, typeEncapsulatesVariableEdges...)
+	
+	// Generate Type "encapsulates" Variable edges
+	typeEncapsulatesOperationEdges := GenerateTypeEncapsulatesOperationEdges(symbols)
+	allEdges = append(allEdges, typeEncapsulatesOperationEdges...)
+
+	// Generate "typed" edges
+	typedEdges := GenerateTypedEdges(symbols)
+	allEdges = append(allEdges, typedEdges...)
+
+	// Generate Scope "encloses" Type edges
+	scopeEnclosesTypeEdges := GenerateScopeEnclosesTypeEdges(symbols)
+	allEdges = append(allEdges, scopeEnclosesTypeEdges...)
+
+	// Generate "uses" edges
+	usesEdges := GenerateOperationUsesVariableEdges(simplifiedASTs, symbols)
+	allEdges = append(allEdges, usesEdges...)
+
+	// Generate "requires" edges
+	requiresEdges := GenerateRequiresEdges(simplifiedASTs)
+	allEdges = append(allEdges, requiresEdges...)
+
+	// Generate Project "includes" Files/Folders
+	projectRequiresFilesFoldersEdges, err := GenerateProjectIncludesEdges(sourceRoot)
+	if err == nil {
+		allEdges = append(allEdges, projectRequiresFilesFoldersEdges...)
+	}
+
+	return allEdges
+}
+
+func AddEdge(edges *[]GraphEdge, fromID, toID, label string, props map[string]string) {
+	id := fmt.Sprintf("%s->%s:%s", fromID, toID, label)
+	*edges = append(*edges, GraphEdge{
+		Data: EdgeData{
+			ID:         id,
+			Label:      label,
+			Source:     fromID,
+			Target:     toID,
+			Properties: props,
+		},
+	})
 }
