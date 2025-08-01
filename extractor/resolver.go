@@ -559,6 +559,17 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 		posKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
 
 		switch node.Type {
+		case "Package":
+			if node.Name != "" {
+				symbols[posKey] = &ModifiedDefinitionInfo{
+					Name:      node.Name,
+					Kind:      "package",
+					URI:       node.Position.URI,
+					Line:      node.Position.Line,
+					Character: node.Position.Character,
+				}
+			}
+
 		case "Function", "Method":
 			kind := "func"
 			var receiverType string
