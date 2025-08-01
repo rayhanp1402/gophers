@@ -551,6 +551,12 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 	symbols := make(map[string]*ModifiedDefinitionInfo)
 
 	var walk func(node *SimplifiedASTNode, parentType string)
+
+	packageName := ""
+	if ast != nil && len(ast.Children) > 0 && ast.Children[0].Type == "Package" {
+		packageName = ast.Children[0].Name
+	}
+
 	walk = func(node *SimplifiedASTNode, parentType string) {
 		if node == nil || node.Position == nil {
 			return
@@ -650,6 +656,7 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 					URI:       node.Position.URI,
 					Line:      node.Position.Line,
 					Character: node.Position.Character,
+					PackageName:  packageName,
 				}
 			}
 			for _, field := range node.Children {
@@ -666,6 +673,7 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 					URI:       node.Position.URI,
 					Line:      node.Position.Line,
 					Character: node.Position.Character,
+					PackageName:  packageName,
 				}
 			}
 			for _, method := range node.Children {
@@ -682,6 +690,7 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 					URI:       node.Position.URI,
 					Line:      node.Position.Line,
 					Character: node.Position.Character,
+					PackageName:  packageName,
 				}
 			}
 		}
