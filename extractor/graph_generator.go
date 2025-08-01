@@ -71,7 +71,12 @@ func GenerateGraphNodes(
 		if err != nil {
 			return err
 		}
+
 		normalizedPath := filepath.ToSlash(path)
+
+		if info.IsDir() && filepath.Base(path) == "intermediate_representation" {
+			return filepath.SkipDir
+		}
 
 		if info.IsDir() {
 			id := toNodeID(normalizedPath)
@@ -107,6 +112,7 @@ func GenerateGraphNodes(
 				seen[id] = true
 			}
 		}
+
 		return nil
 	})
 	if err != nil {
