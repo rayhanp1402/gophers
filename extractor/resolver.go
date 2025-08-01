@@ -38,32 +38,7 @@ type ModifiedDefinitionInfo struct {
 	Kind      string
 	Type      string
 	ReceiverType string
-}
-
-type DefinitionInfo struct {
-	Name      string
-	URI       string
-	Line      int
-	Character int
-	Package   string
-	Scope 	  string
-}
-
-func findGoModRoot(start string) (string, error) {
-	dir := start
-	for {
-		goModPath := filepath.Join(dir, "go.mod")
-		fmt.Println("Checking:", goModPath) // ← debug log
-		if _, err := os.Stat(goModPath); err == nil {
-			return dir, nil
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			break
-		}
-		dir = parent
-	}
-	return "", fmt.Errorf("go.mod not found from %s", start)
+	PackageName  string
 }
 
 func LoadTypesInfo(
@@ -434,14 +409,21 @@ func newNode(kind, name string, fset *token.FileSet, path string, pos token.Pos,
 	if obj != nil {
 		objPos := fset.Position(obj.Pos())
 		objAbsPath, _ := filepath.Abs(objPos.Filename)
+
+		pkgName := ""
+		if obj.Pkg() != nil {
+			pkgName = obj.Pkg().Name()
+		}
+
 		declaredAt = &ModifiedDefinitionInfo{
 			Name:         obj.Name(),
 			URI:          "file://" + filepath.ToSlash(objAbsPath),
 			Line:         objPos.Line - 1,
 			Character:    objPos.Column - 1,
-			Kind:         strings.ToLower(strings.TrimPrefix(fmt.Sprintf("%T", obj), "*types.")), // e.g., "Var", "Func"
+			Kind:         strings.ToLower(strings.TrimPrefix(fmt.Sprintf("%T", obj), "*types.")),
 			Type:         obj.Type().String(),
 			ReceiverType: receiverTypeString(obj),
+			PackageName:  pkgName,
 		}
 	}
 
@@ -476,6 +458,11 @@ func newResolvedNode(kind, name string, fset *token.FileSet, path string, pos to
 			absPath = position.Filename
 		}
 
+		pkgName := ""
+		if obj.Pkg() != nil {
+			pkgName = obj.Pkg().Name()
+		}
+
 		node.DeclaredAt = &ModifiedDefinitionInfo{
 			Name:         obj.Name(),
 			URI:          "file://" + filepath.ToSlash(absPath),
@@ -484,6 +471,7 @@ func newResolvedNode(kind, name string, fset *token.FileSet, path string, pos to
 			Kind:         objectKind(obj),
 			Type:         obj.Type().String(),
 			ReceiverType: receiverType(obj),
+			PackageName:  pkgName,
 		}
 	}
 	return node

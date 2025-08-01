@@ -499,22 +499,15 @@ func GenerateScopeEnclosesTypeEdges(
 			continue
 		}
 
-		// Keep URI with file:// prefix for typeID
-		filePath := filepath.ToSlash(def.URI)
-		dir := filepath.Dir(strings.TrimPrefix(filePath, "file://"))
-
-		// Determine package name: if file is main.go, use "main"
-		baseName := filepath.Base(strings.TrimPrefix(filePath, "file://"))
-		pkgName := strings.TrimSuffix(baseName, ".go")
-		if pkgName == "main" {
-			pkgName = "main"
+		if def.URI == "" || def.PackageName == "" {
+			continue
 		}
 
-		// Compose the same package ID as in GenerateGraphNodes
-		scopeQualified := fmt.Sprintf("%s/%s", dir, pkgName)
+		filePath := filepath.ToSlash(def.URI)
+		dir := filepath.Dir(strings.TrimPrefix(filePath, "file://"))
+		scopeQualified := fmt.Sprintf("%s/%s", dir, def.PackageName)
 		scopeID := toNodeID(scopeQualified + ".package")
 
-		// This keeps the file:// prefix
 		typeID := toNodeID(fmt.Sprintf("%s:%d:%d", filePath, def.Line, def.Character))
 
 		edges = append(edges, GraphEdge{
