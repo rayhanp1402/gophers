@@ -59,22 +59,11 @@ func main() {
 		}
 	}
 
-	fmt.Println("=== Symbol Table ===")
-	for pos, info := range symbolTable {
-		fmt.Printf("Position: %s\n", pos)
-		fmt.Printf("  Name: %s\n", info.Name)
-		fmt.Printf("  Kind: %s\n", info.Kind)
-		fmt.Printf("  Type: %s\n", info.Type)
-		fmt.Printf("  URI: %s\n", info.URI)
-		fmt.Printf("  Line: %d, Character: %d\n", info.Line, info.Character)
-		fmt.Printf("  Receiver Type: %s\n", info.ReceiverType)
-		fmt.Println()
+	err = extractor.WriteSymbolTableToFile(symbolTable, "symbol_table.txt")
+	if err != nil {
+		log.Fatalf("Error writing symbol table: %v", err)
 	}
-
-	fmt.Println("Collected symbols:")
-	for posKey, def := range symbolTable {
-		fmt.Printf("- %s (%s) at %s\n", def.Name, def.Kind, posKey)
-	}
+	fmt.Println("Symbol table written to: symbol_table.txt")
 
 	for _, root := range simplifiedASTs {
 		err := extractor.SaveSimplifiedAST(root, absPath, INTERMEDIATE_REPRESENTATION_DIRECTORY)

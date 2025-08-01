@@ -1,6 +1,8 @@
 package extractor
 
 import (
+	"fmt"
+	"os"
 	"strings"
 )
 
@@ -21,4 +23,24 @@ func isPrimitiveType(name string) bool {
 	default:
 		return false
 	}
+}
+
+func WriteSymbolTableToFile(symbolTable map[string]*ModifiedDefinitionInfo, outputPath string) error {
+	file, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("failed to create symbol table file: %w", err)
+	}
+	defer file.Close()
+
+	for pos, info := range symbolTable {
+		fmt.Fprintf(file, "Position: %s\n", pos)
+		fmt.Fprintf(file, "  Name: %s\n", info.Name)
+		fmt.Fprintf(file, "  Kind: %s\n", info.Kind)
+		fmt.Fprintf(file, "  Type: %s\n", info.Type)
+		fmt.Fprintf(file, "  URI: %s\n", info.URI)
+		fmt.Fprintf(file, "  Line: %d, Character: %d\n", info.Line, info.Character)
+		fmt.Fprintf(file, "  Receiver Type: %s\n\n", info.ReceiverType)
+	}
+
+	return nil
 }

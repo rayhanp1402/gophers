@@ -277,9 +277,6 @@ func buildSimplifiedASTWithGlobals(
 						return false
 					}
 
-					// DEBUG log: print selector name
-					log.Printf("SelectorExpr: %s\n", expr.Sel.Name)
-
 					if selInfo, ok := typesInfo.Selections[expr]; ok {
 						obj := selInfo.Obj()
 						kind := "FieldUse"
@@ -287,22 +284,12 @@ func buildSimplifiedASTWithGlobals(
 							kind = "MethodCall"
 						}
 
-						// DEBUG log: what we resolved
-						log.Printf("  -> Selection resolved: obj=%#v\n", obj)
-
 						node := newResolvedNode(kind, expr.Sel.Name, fset, path, expr.Sel.Pos(), obj)
-
-						if node.DeclaredAt != nil {
-							log.Printf("  -> DeclaredAt: %+v\n", *node.DeclaredAt)
-						} else {
-							log.Println("  -> DeclaredAt: nil")
-						}
 
 						children = append(children, node)
 					} else {
 						// fallback to ObjectOf if Selection failed
 						obj := typesInfo.ObjectOf(expr.Sel)
-						log.Printf("  -> Selection not found, fallback ObjectOf: obj=%#v\n", obj)
 
 						kind := "FieldUse"
 						if obj != nil {
