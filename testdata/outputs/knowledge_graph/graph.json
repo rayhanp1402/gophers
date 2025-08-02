@@ -3,13 +3,37 @@
     "nodes": [
       {
         "data": {
-          "id": "project:C:.Tugas_Akhir.gophers.testdata.go-backend",
+          "id": "C:.Tugas_Akhir.gophers.testdata.go-backend.handlers/handlers.package",
           "labels": [
-            "Project"
+            "Scope"
           ],
           "properties": {
-            "qualifiedName": "C:/Tugas_Akhir/gophers/testdata/go-backend",
-            "simpleName": "go-backend"
+            "qualifiedName": "C:\\Tugas_Akhir\\gophers\\testdata\\go-backend\\handlers/handlers.package",
+            "simpleName": "handlers"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "C:.Tugas_Akhir.gophers.testdata.go-backend.models/models.package",
+          "labels": [
+            "Scope"
+          ],
+          "properties": {
+            "qualifiedName": "C:\\Tugas_Akhir\\gophers\\testdata\\go-backend\\models/models.package",
+            "simpleName": "models"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "C:.Tugas_Akhir.gophers.testdata.go-backend/main.package",
+          "labels": [
+            "Scope"
+          ],
+          "properties": {
+            "qualifiedName": "C:\\Tugas_Akhir\\gophers\\testdata\\go-backend/main.package",
+            "simpleName": "main"
           }
         }
       },
@@ -99,105 +123,15 @@
       },
       {
         "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:4:1",
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
           "labels": [
-            "Variable"
-          ],
-          "properties": {
-            "kind": "field",
-            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:4:1",
-            "simpleName": "B"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:45",
-          "labels": [
-            "Variable"
-          ],
-          "properties": {
-            "kind": "param",
-            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:45",
-            "simpleName": "r"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:14",
-          "labels": [
-            "Variable"
-          ],
-          "properties": {
-            "kind": "param",
-            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:14",
-            "simpleName": "w"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:37",
-          "labels": [
-            "Variable"
-          ],
-          "properties": {
-            "kind": "param",
-            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:37",
-            "simpleName": "name"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:9:5",
-          "labels": [
+            "Operation",
             "Type"
           ],
           "properties": {
-            "kind": "type",
-            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:9:5",
-            "simpleName": "UselessInt"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:8:1",
-          "labels": [
-            "Variable"
-          ],
-          "properties": {
-            "kind": "field",
-            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:8:1",
-            "simpleName": "Sum"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:2:5",
-          "labels": [
-            "Type"
-          ],
-          "properties": {
-            "kind": "struct",
-            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:2:5",
-            "simpleName": "CalculationRequest"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:7:5",
-          "labels": [
-            "Type"
-          ],
-          "properties": {
-            "kind": "struct",
-            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:7:5",
-            "simpleName": "CalculationResult"
+            "kind": "func",
+            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
+            "simpleName": "CalculateHandler"
           }
         }
       },
@@ -216,14 +150,14 @@
       },
       {
         "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:3:1",
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:45",
           "labels": [
             "Variable"
           ],
           "properties": {
-            "kind": "field",
-            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:3:1",
-            "simpleName": "A"
+            "kind": "param",
+            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:45",
+            "simpleName": "r"
           }
         }
       },
@@ -269,6 +203,19 @@
       },
       {
         "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:7:6",
+          "labels": [
+            "Variable"
+          ],
+          "properties": {
+            "kind": "var",
+            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:7:6",
+            "simpleName": "DefaultName"
+          }
+        }
+      },
+      {
+        "data": {
           "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0",
           "labels": [
             "Operation",
@@ -278,6 +225,32 @@
             "kind": "func",
             "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0",
             "simpleName": "SayHello"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:14",
+          "labels": [
+            "Variable"
+          ],
+          "properties": {
+            "kind": "param",
+            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:14",
+            "simpleName": "w"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:37",
+          "labels": [
+            "Variable"
+          ],
+          "properties": {
+            "kind": "param",
+            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:37",
+            "simpleName": "name"
           }
         }
       },
@@ -297,64 +270,91 @@
       },
       {
         "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:9:5",
           "labels": [
-            "Operation",
             "Type"
           ],
           "properties": {
-            "kind": "func",
-            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
-            "simpleName": "CalculateHandler"
+            "kind": "type",
+            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:9:5",
+            "simpleName": "UselessInt"
           }
         }
       },
       {
         "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:7:6",
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:2:5",
+          "labels": [
+            "Type"
+          ],
+          "properties": {
+            "kind": "struct",
+            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:2:5",
+            "simpleName": "CalculationRequest"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:3:1",
           "labels": [
             "Variable"
           ],
           "properties": {
-            "kind": "var",
-            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:7:6",
-            "simpleName": "DefaultName"
+            "kind": "field",
+            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:3:1",
+            "simpleName": "A"
           }
         }
       },
       {
         "data": {
-          "id": "C:.Tugas_Akhir.gophers.testdata.go-backend.models/models.package",
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:4:1",
           "labels": [
-            "Scope"
+            "Variable"
           ],
           "properties": {
-            "qualifiedName": "C:\\Tugas_Akhir\\gophers\\testdata\\go-backend\\models/models.package",
-            "simpleName": "models"
+            "kind": "field",
+            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:4:1",
+            "simpleName": "B"
           }
         }
       },
       {
         "data": {
-          "id": "C:.Tugas_Akhir.gophers.testdata.go-backend.handlers/handlers.package",
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:7:5",
           "labels": [
-            "Scope"
+            "Type"
           ],
           "properties": {
-            "qualifiedName": "C:\\Tugas_Akhir\\gophers\\testdata\\go-backend\\handlers/handlers.package",
-            "simpleName": "handlers"
+            "kind": "struct",
+            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:7:5",
+            "simpleName": "CalculationResult"
           }
         }
       },
       {
         "data": {
-          "id": "C:.Tugas_Akhir.gophers.testdata.go-backend/main.package",
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:8:1",
           "labels": [
-            "Scope"
+            "Variable"
           ],
           "properties": {
-            "qualifiedName": "C:\\Tugas_Akhir\\gophers\\testdata\\go-backend/main.package",
-            "simpleName": "main"
+            "kind": "field",
+            "qualifiedName": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:8:1",
+            "simpleName": "Sum"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "project:C:.Tugas_Akhir.gophers.testdata.go-backend",
+          "labels": [
+            "Project"
+          ],
+          "properties": {
+            "qualifiedName": "C:/Tugas_Akhir/gophers/testdata/go-backend",
+            "simpleName": "go-backend"
           }
         }
       }
@@ -366,61 +366,6 @@
           "label": "contains",
           "source": "C:/Tugas_Akhir/gophers/testdata/go-backend",
           "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers",
-          "properties": {
-            "kind": "FolderContains"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers-\u003eC:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go.contains",
-          "label": "contains",
-          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers",
-          "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
-          "properties": {
-            "kind": "FolderContains"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers-\u003eC:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go.contains",
-          "label": "contains",
-          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers",
-          "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
-          "properties": {
-            "kind": "FolderContains"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend-\u003eC:/Tugas_Akhir/gophers/testdata/go-backend/intermediate_representation.contains",
-          "label": "contains",
-          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend",
-          "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/intermediate_representation",
-          "properties": {
-            "kind": "FolderContains"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/intermediate_representation-\u003eC:/Tugas_Akhir/gophers/testdata/go-backend/intermediate_representation/handlers.contains",
-          "label": "contains",
-          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/intermediate_representation",
-          "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/intermediate_representation/handlers",
-          "properties": {
-            "kind": "FolderContains"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/intermediate_representation-\u003eC:/Tugas_Akhir/gophers/testdata/go-backend/intermediate_representation/models.contains",
-          "label": "contains",
-          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/intermediate_representation",
-          "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/intermediate_representation/models",
           "properties": {
             "kind": "FolderContains"
           }
@@ -450,10 +395,21 @@
       },
       {
         "data": {
-          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/models-\u003eC:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go.contains",
+          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers-\u003eC:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go.contains",
           "label": "contains",
-          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/models",
-          "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers",
+          "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+          "properties": {
+            "kind": "FolderContains"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers-\u003eC:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go.contains",
+          "label": "contains",
+          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers",
+          "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
           "properties": {
             "kind": "FolderContains"
           }
@@ -473,61 +429,13 @@
       },
       {
         "data": {
-          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go-\u003eC:.Tugas_Akhir.gophers.testdata.go-backend.handlers/handlers.package.declares",
-          "label": "declares",
-          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
-          "target": "C:.Tugas_Akhir.gophers.testdata.go-backend.handlers/handlers.package",
-          "properties": {
-            "kind": "Scope",
-            "name": "handlers"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/main.go-\u003eC:.Tugas_Akhir.gophers.testdata.go-backend/main.package.declares",
-          "label": "declares",
-          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
-          "target": "C:.Tugas_Akhir.gophers.testdata.go-backend/main.package",
-          "properties": {
-            "kind": "Scope",
-            "name": "main"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go-\u003eC:.Tugas_Akhir.gophers.testdata.go-backend.models/models.package.declares",
-          "label": "declares",
-          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
-          "target": "C:.Tugas_Akhir.gophers.testdata.go-backend.models/models.package",
-          "properties": {
-            "kind": "Scope",
-            "name": "models"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:9:5.declares",
+          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0.declares",
           "label": "declares",
           "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:9:5",
-          "properties": {
-            "kind": "struct",
-            "name": "Calculator"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0.declares",
-          "label": "declares",
-          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
           "properties": {
             "kind": "func",
-            "name": "SayHello"
+            "name": "CalculateHandler"
           }
         }
       },
@@ -545,25 +453,36 @@
       },
       {
         "data": {
-          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/main.go-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0.declares",
+          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:9:5.declares",
           "label": "declares",
-          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
+          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:9:5",
           "properties": {
-            "kind": "func",
-            "name": "main"
+            "kind": "struct",
+            "name": "Calculator"
           }
         }
       },
       {
         "data": {
-          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0.declares",
-          "label": "declares",
+          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go_requires_C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+          "label": "requires",
           "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
+          "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
           "properties": {
-            "kind": "func",
-            "name": "CalculateHandler"
+            "imported": "example.com/go-backend/models"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go-\u003eC:.Tugas_Akhir.gophers.testdata.go-backend.handlers/handlers.package.declares",
+          "label": "declares",
+          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+          "target": "C:.Tugas_Akhir.gophers.testdata.go-backend.handlers/handlers.package",
+          "properties": {
+            "kind": "Scope",
+            "name": "handlers"
           }
         }
       },
@@ -581,13 +500,37 @@
       },
       {
         "data": {
-          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:7:5.declares",
+          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0.declares",
           "label": "declares",
-          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:7:5",
+          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0",
           "properties": {
-            "kind": "struct",
-            "name": "CalculationResult"
+            "kind": "func",
+            "name": "SayHello"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/main.go-\u003eC:.Tugas_Akhir.gophers.testdata.go-backend/main.package.declares",
+          "label": "declares",
+          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+          "target": "C:.Tugas_Akhir.gophers.testdata.go-backend/main.package",
+          "properties": {
+            "kind": "Scope",
+            "name": "main"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/main.go-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0.declares",
+          "label": "declares",
+          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
+          "properties": {
+            "kind": "func",
+            "name": "main"
           }
         }
       },
@@ -605,6 +548,51 @@
       },
       {
         "data": {
+          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/main.go_requires_C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+          "label": "requires",
+          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+          "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+          "properties": {
+            "imported": "example.com/go-backend/handlers"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/main.go_requires_C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+          "label": "requires",
+          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+          "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+          "properties": {
+            "imported": "example.com/go-backend/handlers"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/models-\u003eC:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go.contains",
+          "label": "contains",
+          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/models",
+          "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+          "properties": {
+            "kind": "FolderContains"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go-\u003eC:.Tugas_Akhir.gophers.testdata.go-backend.models/models.package.declares",
+          "label": "declares",
+          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+          "target": "C:.Tugas_Akhir.gophers.testdata.go-backend.models/models.package",
+          "properties": {
+            "kind": "Scope",
+            "name": "models"
+          }
+        }
+      },
+      {
+        "data": {
           "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:2:5.declares",
           "label": "declares",
           "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
@@ -612,6 +600,62 @@
           "properties": {
             "kind": "struct",
             "name": "CalculationRequest"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:7:5.declares",
+          "label": "declares",
+          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:7:5",
+          "properties": {
+            "kind": "struct",
+            "name": "CalculationResult"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "encloses:C:.Tugas_Akhir.gophers.testdata.go-backend.handlers/handlers.package-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:9:5",
+          "label": "encloses",
+          "source": "C:.Tugas_Akhir.gophers.testdata.go-backend.handlers/handlers.package",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:9:5",
+          "properties": {
+            "kind": "ScopeEnclosesType"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "encloses:C:.Tugas_Akhir.gophers.testdata.go-backend.models/models.package-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:2:5",
+          "label": "encloses",
+          "source": "C:.Tugas_Akhir.gophers.testdata.go-backend.models/models.package",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:2:5",
+          "properties": {
+            "kind": "ScopeEnclosesType"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "encloses:C:.Tugas_Akhir.gophers.testdata.go-backend.models/models.package-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:7:5",
+          "label": "encloses",
+          "source": "C:.Tugas_Akhir.gophers.testdata.go-backend.models/models.package",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:7:5",
+          "properties": {
+            "kind": "ScopeEnclosesType"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "encloses:C:.Tugas_Akhir.gophers.testdata.go-backend/main.package-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:9:5",
+          "label": "encloses",
+          "source": "C:.Tugas_Akhir.gophers.testdata.go-backend/main.package",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:9:5",
+          "properties": {
+            "kind": "ScopeEnclosesType"
           }
         }
       },
@@ -626,31 +670,133 @@
       },
       {
         "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0:invokes",
-          "label": "invokes",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
-          "properties": null
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0:invokes",
-          "label": "invokes",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0",
-          "properties": null
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:0-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:7:5.returns",
-          "label": "returns",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:7:5",
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Program Files/Go/src/net/http/method.go:12:1",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
+          "target": "file://C:/Program Files/Go/src/net/http/method.go:12:1",
           "properties": {
-            "from": "CalculateSum",
-            "to": "CalculationResult"
+            "character": "21",
+            "line": "12"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Program Files/Go/src/net/http/request.go:114:1",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
+          "target": "file://C:/Program Files/Go/src/net/http/request.go:114:1",
+          "properties": {
+            "character": "6",
+            "line": "12"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Program Files/Go/src/net/http/status.go:35:1",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
+          "target": "file://C:/Program Files/Go/src/net/http/status.go:35:1",
+          "properties": {
+            "character": "45",
+            "line": "19"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Program Files/Go/src/net/http/status.go:40:1",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
+          "target": "file://C:/Program Files/Go/src/net/http/status.go:40:1",
+          "properties": {
+            "character": "42",
+            "line": "13"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:10:21",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:10:21",
+          "properties": {
+            "character": "13",
+            "line": "19"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:10:21",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:10:21",
+          "properties": {
+            "character": "13",
+            "line": "13"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:17:3",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:17:3",
+          "properties": {
+            "character": "49",
+            "line": "18"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:17:3",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:17:3",
+          "properties": {
+            "character": "4",
+            "line": "18"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:22:0",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:22:0",
+          "properties": {
+            "character": "1",
+            "line": "23"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:23:0",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:23:0",
+          "properties": {
+            "character": "1",
+            "line": "24"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:23:0",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:23:0",
+          "properties": {
+            "character": "27",
+            "line": "27"
           }
         }
       },
@@ -678,12 +824,92 @@
       },
       {
         "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:0-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:7:5.returns",
+          "label": "returns",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:7:5",
+          "properties": {
+            "from": "CalculateSum",
+            "to": "CalculationResult"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:3:1",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:3:1",
+          "properties": {
+            "character": "42",
+            "line": "31"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:4:1",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:4:1",
+          "properties": {
+            "character": "50",
+            "line": "31"
+          }
+        }
+      },
+      {
+        "data": {
           "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:33-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:0.parameterizes",
           "label": "parameterizes",
           "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:33",
           "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:0",
           "properties": {
             "name": "req"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:33-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:2:5.typed",
+          "label": "typed",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:33",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:2:5",
+          "properties": {
+            "type": "models.CalculationRequest"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:9:5_encapsulates_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:0",
+          "label": "encapsulates",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:9:5",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:0",
+          "properties": {}
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:8:13",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:8:13",
+          "properties": {
+            "character": "13",
+            "line": "10"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:8:36",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:8:36",
+          "properties": {
+            "character": "32",
+            "line": "10"
           }
         }
       },
@@ -706,6 +932,156 @@
           "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0",
           "properties": {
             "name": "name"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0:invokes",
+          "label": "invokes",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
+          "properties": null
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0:invokes",
+          "label": "invokes",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0",
+          "properties": null
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:7:6",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:7:6",
+          "properties": {
+            "character": "19",
+            "line": "17"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:13:31",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:13:31",
+          "properties": {
+            "character": "32",
+            "line": "14"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:13:31",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:13:31",
+          "properties": {
+            "character": "20",
+            "line": "19"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:13:54",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:13:54",
+          "properties": {
+            "character": "55",
+            "line": "14"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:14:1",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:14:1",
+          "properties": {
+            "character": "2",
+            "line": "15"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:14:1",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:14:1",
+          "properties": {
+            "character": "5",
+            "line": "16"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:14:1",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:14:1",
+          "properties": {
+            "character": "3",
+            "line": "17"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:14:1",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:14:1",
+          "properties": {
+            "character": "23",
+            "line": "19"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:22:3",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:22:3",
+          "properties": {
+            "character": "46",
+            "line": "23"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:22:3",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:22:3",
+          "properties": {
+            "character": "12",
+            "line": "24"
+          }
+        }
+      },
+      {
+        "data": {
+          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:22:3",
+          "label": "uses",
+          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
+          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:22:3",
+          "properties": {
+            "character": "4",
+            "line": "23"
           }
         }
       },
@@ -777,415 +1153,6 @@
       },
       {
         "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:9:5_encapsulates_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:0",
-          "label": "encapsulates",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:9:5",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:0",
-          "properties": {}
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:33-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:2:5.typed",
-          "label": "typed",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:33",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:2:5",
-          "properties": {
-            "type": "models.CalculationRequest"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "encloses:C:.Tugas_Akhir.gophers.testdata.go-backend.handlers/handlers.package-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:9:5",
-          "label": "encloses",
-          "source": "C:.Tugas_Akhir.gophers.testdata.go-backend.handlers/handlers.package",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:9:5",
-          "properties": {
-            "kind": "ScopeEnclosesType"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "encloses:C:.Tugas_Akhir.gophers.testdata.go-backend/main.package-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:9:5",
-          "label": "encloses",
-          "source": "C:.Tugas_Akhir.gophers.testdata.go-backend/main.package",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:9:5",
-          "properties": {
-            "kind": "ScopeEnclosesType"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "encloses:C:.Tugas_Akhir.gophers.testdata.go-backend.models/models.package-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:2:5",
-          "label": "encloses",
-          "source": "C:.Tugas_Akhir.gophers.testdata.go-backend.models/models.package",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:2:5",
-          "properties": {
-            "kind": "ScopeEnclosesType"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "encloses:C:.Tugas_Akhir.gophers.testdata.go-backend.models/models.package-\u003efile://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:7:5",
-          "label": "encloses",
-          "source": "C:.Tugas_Akhir.gophers.testdata.go-backend.models/models.package",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:7:5",
-          "properties": {
-            "kind": "ScopeEnclosesType"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Program Files/Go/src/net/http/request.go:114:1",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
-          "target": "file://C:/Program Files/Go/src/net/http/request.go:114:1",
-          "properties": {
-            "character": "6",
-            "line": "12"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Program Files/Go/src/net/http/method.go:12:1",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
-          "target": "file://C:/Program Files/Go/src/net/http/method.go:12:1",
-          "properties": {
-            "character": "21",
-            "line": "12"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:10:21",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:10:21",
-          "properties": {
-            "character": "13",
-            "line": "13"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Program Files/Go/src/net/http/status.go:40:1",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
-          "target": "file://C:/Program Files/Go/src/net/http/status.go:40:1",
-          "properties": {
-            "character": "42",
-            "line": "13"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:17:3",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:17:3",
-          "properties": {
-            "character": "4",
-            "line": "18"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:17:3",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:17:3",
-          "properties": {
-            "character": "49",
-            "line": "18"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:10:21",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:10:21",
-          "properties": {
-            "character": "13",
-            "line": "19"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Program Files/Go/src/net/http/status.go:35:1",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
-          "target": "file://C:/Program Files/Go/src/net/http/status.go:35:1",
-          "properties": {
-            "character": "45",
-            "line": "19"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:22:0",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:22:0",
-          "properties": {
-            "character": "1",
-            "line": "23"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:23:0",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:23:0",
-          "properties": {
-            "character": "1",
-            "line": "24"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:23:0",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:23:0",
-          "properties": {
-            "character": "27",
-            "line": "27"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:3:1",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:3:1",
-          "properties": {
-            "character": "42",
-            "line": "31"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:4:1",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:4:1",
-          "properties": {
-            "character": "50",
-            "line": "31"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:8:13",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:8:13",
-          "properties": {
-            "character": "13",
-            "line": "10"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:8:36",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:8:36",
-          "properties": {
-            "character": "32",
-            "line": "10"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:13:31",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:13:31",
-          "properties": {
-            "character": "32",
-            "line": "14"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:13:54",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:13:54",
-          "properties": {
-            "character": "55",
-            "line": "14"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:14:1",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:14:1",
-          "properties": {
-            "character": "2",
-            "line": "15"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:14:1",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:14:1",
-          "properties": {
-            "character": "5",
-            "line": "16"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:14:1",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:14:1",
-          "properties": {
-            "character": "3",
-            "line": "17"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:7:6",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:7:6",
-          "properties": {
-            "character": "19",
-            "line": "17"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:13:31",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:13:31",
-          "properties": {
-            "character": "20",
-            "line": "19"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:14:1",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:14:1",
-          "properties": {
-            "character": "23",
-            "line": "19"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:22:3",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:22:3",
-          "properties": {
-            "character": "4",
-            "line": "23"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:22:3",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:22:3",
-          "properties": {
-            "character": "46",
-            "line": "23"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0_uses_file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:22:3",
-          "label": "uses",
-          "source": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0",
-          "target": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:22:3",
-          "properties": {
-            "character": "12",
-            "line": "24"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go_requires_C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
-          "label": "requires",
-          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
-          "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
-          "properties": {
-            "imported": "example.com/go-backend/models"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/main.go_requires_C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
-          "label": "requires",
-          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
-          "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
-          "properties": {
-            "imported": "example.com/go-backend/handlers"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "C:/Tugas_Akhir/gophers/testdata/go-backend/main.go_requires_C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
-          "label": "requires",
-          "source": "C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
-          "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
-          "properties": {
-            "imported": "example.com/go-backend/handlers"
-          }
-        }
-      },
-      {
-        "data": {
           "id": "project:C:.Tugas_Akhir.gophers.testdata.go-backend_includes_C:/Tugas_Akhir/gophers/testdata/go-backend",
           "label": "includes",
           "source": "project:C:.Tugas_Akhir.gophers.testdata.go-backend",
@@ -1223,39 +1190,6 @@
           "label": "includes",
           "source": "project:C:.Tugas_Akhir.gophers.testdata.go-backend",
           "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
-          "properties": {
-            "type": "includes"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "project:C:.Tugas_Akhir.gophers.testdata.go-backend_includes_C:/Tugas_Akhir/gophers/testdata/go-backend/intermediate_representation",
-          "label": "includes",
-          "source": "project:C:.Tugas_Akhir.gophers.testdata.go-backend",
-          "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/intermediate_representation",
-          "properties": {
-            "type": "includes"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "project:C:.Tugas_Akhir.gophers.testdata.go-backend_includes_C:/Tugas_Akhir/gophers/testdata/go-backend/intermediate_representation/handlers",
-          "label": "includes",
-          "source": "project:C:.Tugas_Akhir.gophers.testdata.go-backend",
-          "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/intermediate_representation/handlers",
-          "properties": {
-            "type": "includes"
-          }
-        }
-      },
-      {
-        "data": {
-          "id": "project:C:.Tugas_Akhir.gophers.testdata.go-backend_includes_C:/Tugas_Akhir/gophers/testdata/go-backend/intermediate_representation/models",
-          "label": "includes",
-          "source": "project:C:.Tugas_Akhir.gophers.testdata.go-backend",
-          "target": "C:/Tugas_Akhir/gophers/testdata/go-backend/intermediate_representation/models",
           "properties": {
             "type": "includes"
           }
