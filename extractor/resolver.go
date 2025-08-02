@@ -638,19 +638,20 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 				if field.Type == "Field" {
 					var fieldType string
 
-					// Find the type from Field's children (e.g., Ident or SelectorExpr)
 					for _, sub := range field.Children {
 						if sub.Type == "Ident" || sub.Type == "SelectorExpr" || sub.Type == "StarExpr" {
-							fieldType = sub.Name
+							if sub.Name != "" {
+								fieldType = sub.Name
+								break
+							}
 						}
 					}
 
-					// Now find the identifier(s) that use this type
 					for _, sub := range field.Children {
 						if sub.Type == "Ident" && sub.Position != nil {
-							// Skip if it's the type, already used
-							if sub.Name == fieldType {
-								continue
+							// Fallback: if no type found structurally, use DeclaredAt.Type
+							if fieldType == "" && sub.DeclaredAt != nil && sub.DeclaredAt.Type != "" {
+								fieldType = sub.DeclaredAt.Type
 							}
 
 							identKey := fmt.Sprintf("%s:%d:%d", sub.Position.URI, sub.Position.Line, sub.Position.Character)
