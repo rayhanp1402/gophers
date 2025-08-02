@@ -461,7 +461,7 @@ func newNode(kind, name string, fset *token.FileSet, path string, pos token.Pos,
 func receiverTypeString(obj types.Object) string {
 	if fn, ok := obj.(*types.Func); ok {
 		if sig, ok := fn.Type().(*types.Signature); ok && sig.Recv() != nil {
-			return sig.Recv().Type().String()
+			return types.TypeString(sig.Recv().Type(), func(*types.Package) string { return "" })
 		}
 	}
 	return ""
@@ -522,7 +522,7 @@ func objectKind(obj types.Object) string {
 func receiverType(obj types.Object) string {
 	if fn, ok := obj.(*types.Func); ok {
 		if sig, ok := fn.Type().(*types.Signature); ok && sig.Recv() != nil {
-			return sig.Recv().Type().String()
+			return types.TypeString(sig.Recv().Type(), func(*types.Package) string { return "" })
 		}
 	}
 	return ""
@@ -599,17 +599,22 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 
 			if node.Type == "Method" {
 				kind = "method"
-				// look for Receiver node
 				for _, child := range node.Children {
 					if child.Type == "Receiver" {
 						for _, fieldList := range child.Children {
 							if fieldList.Type == "FieldList" {
 								for _, field := range fieldList.Children {
 									if field.Type == "Field" {
+										var nameIdent, typeIdent *SimplifiedASTNode
 										for _, ident := range field.Children {
-											if ident.Type == "Ident" {
-												receiverType = ident.Name
+											if ident.Type == "Ident" && nameIdent == nil {
+												nameIdent = ident
+											} else if (ident.Type == "Ident" || ident.Type == "StarExpr" || ident.Type == "SelectorExpr") {
+												typeIdent = ident
 											}
+										}
+										if typeIdent != nil {
+											receiverType = typeIdent.Name
 										}
 									}
 								}
@@ -635,7 +640,7 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 
 					// Find the type from Field's children (e.g., Ident or SelectorExpr)
 					for _, sub := range field.Children {
-						if sub.Type == "Ident" || sub.Type == "SelectorExpr" {
+						if sub.Type == "Ident" || sub.Type == "SelectorExpr" || sub.Type == "StarExpr" {
 							fieldType = sub.Name
 						}
 					}
