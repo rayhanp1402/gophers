@@ -1,0 +1,845 @@
+{
+  "type": "File",
+  "name": "calculator.go",
+  "children": [
+    {
+      "type": "Package",
+      "name": "handlers",
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+        "line": 0,
+        "character": 8
+      }
+    },
+    {
+      "type": "Import",
+      "name": "encoding/json",
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+        "line": 3,
+        "character": 1
+      }
+    },
+    {
+      "type": "Import",
+      "name": "net/http",
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+        "line": 4,
+        "character": 1
+      }
+    },
+    {
+      "type": "Import",
+      "name": "example.com/go-backend/models",
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+        "line": 6,
+        "character": 1
+      }
+    },
+    {
+      "type": "Struct",
+      "name": "Calculator",
+      "children": [
+        {
+          "type": "Struct",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 9,
+            "character": 16
+          }
+        }
+      ],
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+        "line": 9,
+        "character": 5
+      },
+      "declaredAt": {
+        "Name": "Calculator",
+        "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+        "Line": 9,
+        "Character": 5,
+        "Kind": "typename",
+        "Type": "handlers.Calculator",
+        "ReceiverType": "",
+        "PackageName": "handlers"
+      }
+    },
+    {
+      "type": "Function",
+      "name": "CalculateHandler",
+      "children": [
+        {
+          "type": "Params",
+          "children": [
+            {
+              "type": "Field",
+              "children": [
+                {
+                  "type": "Ident",
+                  "name": "w",
+                  "position": {
+                    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+                    "line": 11,
+                    "character": 22
+                  },
+                  "declaredAt": {
+                    "Name": "w",
+                    "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+                    "Line": 11,
+                    "Character": 22,
+                    "Kind": "var",
+                    "Type": "net/http.ResponseWriter",
+                    "ReceiverType": "",
+                    "PackageName": "handlers"
+                  }
+                },
+                {
+                  "type": "SelectorExpr",
+                  "name": "http.ResponseWriter",
+                  "position": {
+                    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+                    "line": 11,
+                    "character": 29
+                  },
+                  "declaredAt": {
+                    "Name": "ResponseWriter",
+                    "URI": "file://C:/Program Files/Go/src/net/http/server.go",
+                    "Line": 95,
+                    "Character": 5,
+                    "Kind": "typename",
+                    "Type": "net/http.ResponseWriter",
+                    "ReceiverType": "",
+                    "PackageName": "http"
+                  }
+                }
+              ],
+              "position": {
+                "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+                "line": 11,
+                "character": 22
+              }
+            },
+            {
+              "type": "Field",
+              "children": [
+                {
+                  "type": "Ident",
+                  "name": "r",
+                  "position": {
+                    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+                    "line": 11,
+                    "character": 45
+                  },
+                  "declaredAt": {
+                    "Name": "r",
+                    "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+                    "Line": 11,
+                    "Character": 45,
+                    "Kind": "var",
+                    "Type": "*net/http.Request",
+                    "ReceiverType": "",
+                    "PackageName": "handlers"
+                  }
+                }
+              ],
+              "position": {
+                "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+                "line": 11,
+                "character": 45
+              }
+            }
+          ],
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 11,
+            "character": 21
+          }
+        },
+        {
+          "type": "FieldUse",
+          "name": "Method",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 12,
+            "character": 6
+          },
+          "declaredAt": {
+            "Name": "Method",
+            "URI": "file://C:/Program Files/Go/src/net/http/request.go",
+            "Line": 115,
+            "Character": 2,
+            "Kind": "field",
+            "Type": "string",
+            "ReceiverType": "",
+            "PackageName": "http"
+          }
+        },
+        {
+          "type": "FieldUse",
+          "name": "MethodPost",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 12,
+            "character": 21
+          },
+          "declaredAt": {
+            "Name": "MethodPost",
+            "URI": "file://C:/Program Files/Go/src/net/http/method.go",
+            "Line": 13,
+            "Character": 2,
+            "Kind": "const",
+            "Type": "untyped string",
+            "ReceiverType": "",
+            "PackageName": "http"
+          }
+        },
+        {
+          "type": "MethodCall",
+          "name": "Error",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 13,
+            "character": 7
+          },
+          "declaredAt": {
+            "Name": "Error",
+            "URI": "file://C:/Program Files/Go/src/net/http/server.go",
+            "Line": 2234,
+            "Character": 5,
+            "Kind": "func",
+            "Type": "func(w net/http.ResponseWriter, error string, code int)",
+            "ReceiverType": "",
+            "PackageName": "http"
+          }
+        },
+        {
+          "type": "VarUse",
+          "name": "w",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 13,
+            "character": 13
+          },
+          "declaredAt": {
+            "Name": "w",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "Line": 11,
+            "Character": 22,
+            "Kind": "var",
+            "Type": "net/http.ResponseWriter",
+            "ReceiverType": "",
+            "PackageName": "handlers"
+          }
+        },
+        {
+          "type": "FieldUse",
+          "name": "StatusMethodNotAllowed",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 13,
+            "character": 42
+          },
+          "declaredAt": {
+            "Name": "StatusMethodNotAllowed",
+            "URI": "file://C:/Program Files/Go/src/net/http/status.go",
+            "Line": 41,
+            "Character": 2,
+            "Kind": "const",
+            "Type": "untyped int",
+            "ReceiverType": "",
+            "PackageName": "http"
+          }
+        },
+        {
+          "type": "GlobalVarUse",
+          "name": "req",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 17,
+            "character": 5
+          },
+          "declaredAt": {
+            "Name": "req",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "Line": 17,
+            "Character": 5,
+            "Kind": "var",
+            "Type": "example.com/go-backend/models.CalculationRequest",
+            "ReceiverType": "",
+            "PackageName": "handlers"
+          }
+        },
+        {
+          "type": "TypeUse",
+          "name": "CalculationRequest",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 17,
+            "character": 16
+          },
+          "declaredAt": {
+            "Name": "CalculationRequest",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+            "Line": 3,
+            "Character": 6,
+            "Kind": "type",
+            "Type": "example.com/go-backend/models.CalculationRequest",
+            "ReceiverType": "",
+            "PackageName": "models"
+          }
+        },
+        {
+          "type": "VarUse",
+          "name": "err",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 18,
+            "character": 4
+          },
+          "declaredAt": {
+            "Name": "err",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "Line": 18,
+            "Character": 4,
+            "Kind": "var",
+            "Type": "error",
+            "ReceiverType": "",
+            "PackageName": "handlers"
+          }
+        },
+        {
+          "type": "MethodCall",
+          "name": "Decode",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 18,
+            "character": 35
+          },
+          "declaredAt": {
+            "Name": "Decode",
+            "URI": "file://C:/Program Files/Go/src/encoding/json/stream.go",
+            "Line": 48,
+            "Character": 20,
+            "Kind": "func",
+            "Type": "func(v any) error",
+            "ReceiverType": "*Decoder",
+            "PackageName": "json"
+          }
+        },
+        {
+          "type": "GlobalVarUse",
+          "name": "req",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 18,
+            "character": 43
+          },
+          "declaredAt": {
+            "Name": "req",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "Line": 17,
+            "Character": 5,
+            "Kind": "var",
+            "Type": "example.com/go-backend/models.CalculationRequest",
+            "ReceiverType": "",
+            "PackageName": "handlers"
+          }
+        },
+        {
+          "type": "VarUse",
+          "name": "err",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 18,
+            "character": 49
+          },
+          "declaredAt": {
+            "Name": "err",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "Line": 18,
+            "Character": 4,
+            "Kind": "var",
+            "Type": "error",
+            "ReceiverType": "",
+            "PackageName": "handlers"
+          }
+        },
+        {
+          "type": "MethodCall",
+          "name": "Error",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 19,
+            "character": 7
+          },
+          "declaredAt": {
+            "Name": "Error",
+            "URI": "file://C:/Program Files/Go/src/net/http/server.go",
+            "Line": 2234,
+            "Character": 5,
+            "Kind": "func",
+            "Type": "func(w net/http.ResponseWriter, error string, code int)",
+            "ReceiverType": "",
+            "PackageName": "http"
+          }
+        },
+        {
+          "type": "VarUse",
+          "name": "w",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 19,
+            "character": 13
+          },
+          "declaredAt": {
+            "Name": "w",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "Line": 11,
+            "Character": 22,
+            "Kind": "var",
+            "Type": "net/http.ResponseWriter",
+            "ReceiverType": "",
+            "PackageName": "handlers"
+          }
+        },
+        {
+          "type": "FieldUse",
+          "name": "StatusBadRequest",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 19,
+            "character": 45
+          },
+          "declaredAt": {
+            "Name": "StatusBadRequest",
+            "URI": "file://C:/Program Files/Go/src/net/http/status.go",
+            "Line": 36,
+            "Character": 2,
+            "Kind": "const",
+            "Type": "untyped int",
+            "ReceiverType": "",
+            "PackageName": "http"
+          }
+        },
+        {
+          "type": "VarUse",
+          "name": "calc",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 23,
+            "character": 1
+          },
+          "declaredAt": {
+            "Name": "calc",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "Line": 23,
+            "Character": 1,
+            "Kind": "var",
+            "Type": "handlers.Calculator",
+            "ReceiverType": "",
+            "PackageName": "handlers"
+          }
+        },
+        {
+          "type": "TypeUse",
+          "name": "Calculator",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 23,
+            "character": 9
+          },
+          "declaredAt": {
+            "Name": "Calculator",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "Line": 9,
+            "Character": 5,
+            "Kind": "typename",
+            "Type": "handlers.Calculator",
+            "ReceiverType": "",
+            "PackageName": "handlers"
+          }
+        },
+        {
+          "type": "VarUse",
+          "name": "result",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 24,
+            "character": 1
+          },
+          "declaredAt": {
+            "Name": "result",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "Line": 24,
+            "Character": 1,
+            "Kind": "var",
+            "Type": "example.com/go-backend/models.CalculationResult",
+            "ReceiverType": "",
+            "PackageName": "handlers"
+          }
+        },
+        {
+          "type": "MethodCall",
+          "name": "CalculateSum",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 24,
+            "character": 16
+          },
+          "declaredAt": {
+            "Name": "CalculateSum",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "Line": 30,
+            "Character": 20,
+            "Kind": "func",
+            "Type": "func(req example.com/go-backend/models.CalculationRequest) example.com/go-backend/models.CalculationResult",
+            "ReceiverType": "Calculator",
+            "PackageName": "handlers"
+          }
+        },
+        {
+          "type": "GlobalVarUse",
+          "name": "req",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 24,
+            "character": 29
+          },
+          "declaredAt": {
+            "Name": "req",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "Line": 17,
+            "Character": 5,
+            "Kind": "var",
+            "Type": "example.com/go-backend/models.CalculationRequest",
+            "ReceiverType": "",
+            "PackageName": "handlers"
+          }
+        },
+        {
+          "type": "MethodCall",
+          "name": "Set",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 26,
+            "character": 12
+          },
+          "declaredAt": {
+            "Name": "Set",
+            "URI": "file://C:/Program Files/Go/src/net/http/header.go",
+            "Line": 38,
+            "Character": 16,
+            "Kind": "func",
+            "Type": "func(key string, value string)",
+            "ReceiverType": "Header",
+            "PackageName": "http"
+          }
+        },
+        {
+          "type": "MethodCall",
+          "name": "Encode",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 27,
+            "character": 20
+          },
+          "declaredAt": {
+            "Name": "Encode",
+            "URI": "file://C:/Program Files/Go/src/encoding/json/stream.go",
+            "Line": 201,
+            "Character": 20,
+            "Kind": "func",
+            "Type": "func(v any) error",
+            "ReceiverType": "*Encoder",
+            "PackageName": "json"
+          }
+        },
+        {
+          "type": "VarUse",
+          "name": "result",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 27,
+            "character": 27
+          },
+          "declaredAt": {
+            "Name": "result",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "Line": 24,
+            "Character": 1,
+            "Kind": "var",
+            "Type": "example.com/go-backend/models.CalculationResult",
+            "ReceiverType": "",
+            "PackageName": "handlers"
+          }
+        }
+      ],
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+        "line": 11,
+        "character": 0
+      },
+      "declaredAt": {
+        "Name": "CalculateHandler",
+        "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+        "Line": 11,
+        "Character": 5,
+        "Kind": "func",
+        "Type": "func(w net/http.ResponseWriter, r *net/http.Request)",
+        "ReceiverType": "",
+        "PackageName": "handlers"
+      }
+    },
+    {
+      "type": "Method",
+      "name": "CalculateSum",
+      "children": [
+        {
+          "type": "Receiver",
+          "children": [
+            {
+              "type": "FieldList",
+              "children": [
+                {
+                  "type": "Field",
+                  "children": [
+                    {
+                      "type": "Ident",
+                      "name": "c",
+                      "position": {
+                        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+                        "line": 30,
+                        "character": 6
+                      },
+                      "declaredAt": {
+                        "Name": "c",
+                        "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+                        "Line": 30,
+                        "Character": 6,
+                        "Kind": "var",
+                        "Type": "handlers.Calculator",
+                        "ReceiverType": "",
+                        "PackageName": "handlers"
+                      }
+                    },
+                    {
+                      "type": "Ident",
+                      "name": "Calculator",
+                      "position": {
+                        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+                        "line": 30,
+                        "character": 8
+                      },
+                      "declaredAt": {
+                        "Name": "Calculator",
+                        "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+                        "Line": 9,
+                        "Character": 5,
+                        "Kind": "typename",
+                        "Type": "handlers.Calculator",
+                        "ReceiverType": "",
+                        "PackageName": "handlers"
+                      }
+                    }
+                  ],
+                  "position": {
+                    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+                    "line": 30,
+                    "character": 6
+                  }
+                }
+              ],
+              "position": {
+                "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+                "line": 30,
+                "character": 5
+              }
+            }
+          ],
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 30,
+            "character": 5
+          }
+        },
+        {
+          "type": "Params",
+          "children": [
+            {
+              "type": "Field",
+              "children": [
+                {
+                  "type": "Ident",
+                  "name": "req",
+                  "position": {
+                    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+                    "line": 30,
+                    "character": 33
+                  },
+                  "declaredAt": {
+                    "Name": "req",
+                    "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+                    "Line": 30,
+                    "Character": 33,
+                    "Kind": "var",
+                    "Type": "example.com/go-backend/models.CalculationRequest",
+                    "ReceiverType": "",
+                    "PackageName": "handlers"
+                  }
+                },
+                {
+                  "type": "SelectorExpr",
+                  "name": "models.CalculationRequest",
+                  "position": {
+                    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+                    "line": 30,
+                    "character": 44
+                  },
+                  "declaredAt": {
+                    "Name": "CalculationRequest",
+                    "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+                    "Line": 2,
+                    "Character": 5,
+                    "Kind": "typename",
+                    "Type": "example.com/go-backend/models.CalculationRequest",
+                    "ReceiverType": "",
+                    "PackageName": "models"
+                  }
+                }
+              ],
+              "position": {
+                "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+                "line": 30,
+                "character": 33
+              }
+            }
+          ],
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 30,
+            "character": 32
+          }
+        },
+        {
+          "type": "Results",
+          "children": [
+            {
+              "type": "Field",
+              "children": [
+                {
+                  "type": "SelectorExpr",
+                  "name": "models.CalculationResult",
+                  "position": {
+                    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+                    "line": 30,
+                    "character": 71
+                  },
+                  "declaredAt": {
+                    "Name": "CalculationResult",
+                    "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+                    "Line": 7,
+                    "Character": 5,
+                    "Kind": "typename",
+                    "Type": "example.com/go-backend/models.CalculationResult",
+                    "ReceiverType": "",
+                    "PackageName": "models"
+                  }
+                }
+              ],
+              "position": {
+                "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+                "line": 30,
+                "character": 64
+              }
+            }
+          ],
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 30,
+            "character": 64
+          }
+        },
+        {
+          "type": "TypeUse",
+          "name": "CalculationResult",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 31,
+            "character": 15
+          },
+          "declaredAt": {
+            "Name": "CalculationResult",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+            "Line": 7,
+            "Character": 5,
+            "Kind": "typename",
+            "Type": "example.com/go-backend/models.CalculationResult",
+            "ReceiverType": "",
+            "PackageName": "models"
+          }
+        },
+        {
+          "type": "FieldUse",
+          "name": "A",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 31,
+            "character": 42
+          },
+          "declaredAt": {
+            "Name": "A",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+            "Line": 4,
+            "Character": 2,
+            "Kind": "field",
+            "Type": "int",
+            "ReceiverType": "",
+            "PackageName": "models"
+          }
+        },
+        {
+          "type": "FieldUse",
+          "name": "B",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "line": 31,
+            "character": 50
+          },
+          "declaredAt": {
+            "Name": "B",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+            "Line": 5,
+            "Character": 2,
+            "Kind": "field",
+            "Type": "int",
+            "ReceiverType": "",
+            "PackageName": "models"
+          }
+        }
+      ],
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+        "line": 30,
+        "character": 0
+      },
+      "declaredAt": {
+        "Name": "CalculateSum",
+        "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+        "Line": 30,
+        "Character": 20,
+        "Kind": "func",
+        "Type": "func(req example.com/go-backend/models.CalculationRequest) example.com/go-backend/models.CalculationResult",
+        "ReceiverType": "Calculator",
+        "PackageName": "handlers"
+      }
+    }
+  ],
+  "position": {
+    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+    "line": 0,
+    "character": 0
+  }
+}

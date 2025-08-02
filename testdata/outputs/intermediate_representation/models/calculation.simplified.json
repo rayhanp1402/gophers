@@ -1,0 +1,226 @@
+{
+  "type": "File",
+  "name": "calculation.go",
+  "children": [
+    {
+      "type": "Package",
+      "name": "models",
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+        "line": 0,
+        "character": 8
+      }
+    },
+    {
+      "type": "Struct",
+      "name": "CalculationRequest",
+      "children": [
+        {
+          "type": "Struct",
+          "children": [
+            {
+              "type": "Field",
+              "children": [
+                {
+                  "type": "Ident",
+                  "name": "A",
+                  "position": {
+                    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+                    "line": 3,
+                    "character": 1
+                  },
+                  "declaredAt": {
+                    "Name": "A",
+                    "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+                    "Line": 3,
+                    "Character": 1,
+                    "Kind": "var",
+                    "Type": "int",
+                    "ReceiverType": "",
+                    "PackageName": "models"
+                  }
+                },
+                {
+                  "type": "Ident",
+                  "name": "int",
+                  "position": {
+                    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+                    "line": 3,
+                    "character": 3
+                  },
+                  "declaredAt": {
+                    "Name": "int",
+                    "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend",
+                    "Line": -1,
+                    "Character": -1,
+                    "Kind": "typename",
+                    "Type": "int",
+                    "ReceiverType": "",
+                    "PackageName": ""
+                  }
+                }
+              ],
+              "position": {
+                "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+                "line": 3,
+                "character": 1
+              }
+            },
+            {
+              "type": "Field",
+              "children": [
+                {
+                  "type": "Ident",
+                  "name": "B",
+                  "position": {
+                    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+                    "line": 4,
+                    "character": 1
+                  },
+                  "declaredAt": {
+                    "Name": "B",
+                    "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+                    "Line": 4,
+                    "Character": 1,
+                    "Kind": "var",
+                    "Type": "int",
+                    "ReceiverType": "",
+                    "PackageName": "models"
+                  }
+                },
+                {
+                  "type": "Ident",
+                  "name": "int",
+                  "position": {
+                    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+                    "line": 4,
+                    "character": 3
+                  },
+                  "declaredAt": {
+                    "Name": "int",
+                    "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend",
+                    "Line": -1,
+                    "Character": -1,
+                    "Kind": "typename",
+                    "Type": "int",
+                    "ReceiverType": "",
+                    "PackageName": ""
+                  }
+                }
+              ],
+              "position": {
+                "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+                "line": 4,
+                "character": 1
+              }
+            }
+          ],
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+            "line": 2,
+            "character": 24
+          }
+        }
+      ],
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+        "line": 2,
+        "character": 5
+      },
+      "declaredAt": {
+        "Name": "CalculationRequest",
+        "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+        "Line": 2,
+        "Character": 5,
+        "Kind": "typename",
+        "Type": "models.CalculationRequest",
+        "ReceiverType": "",
+        "PackageName": "models"
+      }
+    },
+    {
+      "type": "Struct",
+      "name": "CalculationResult",
+      "children": [
+        {
+          "type": "Struct",
+          "children": [
+            {
+              "type": "Field",
+              "children": [
+                {
+                  "type": "Ident",
+                  "name": "Sum",
+                  "position": {
+                    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+                    "line": 8,
+                    "character": 1
+                  },
+                  "declaredAt": {
+                    "Name": "Sum",
+                    "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+                    "Line": 8,
+                    "Character": 1,
+                    "Kind": "var",
+                    "Type": "int",
+                    "ReceiverType": "",
+                    "PackageName": "models"
+                  }
+                },
+                {
+                  "type": "Ident",
+                  "name": "int",
+                  "position": {
+                    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+                    "line": 8,
+                    "character": 5
+                  },
+                  "declaredAt": {
+                    "Name": "int",
+                    "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend",
+                    "Line": -1,
+                    "Character": -1,
+                    "Kind": "typename",
+                    "Type": "int",
+                    "ReceiverType": "",
+                    "PackageName": ""
+                  }
+                }
+              ],
+              "position": {
+                "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+                "line": 8,
+                "character": 1
+              }
+            }
+          ],
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+            "line": 7,
+            "character": 23
+          }
+        }
+      ],
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+        "line": 7,
+        "character": 5
+      },
+      "declaredAt": {
+        "Name": "CalculationResult",
+        "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+        "Line": 7,
+        "Character": 5,
+        "Kind": "typename",
+        "Type": "models.CalculationResult",
+        "ReceiverType": "",
+        "PackageName": "models"
+      }
+    }
+  ],
+  "position": {
+    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go",
+    "line": 0,
+    "character": 0
+  }
+}

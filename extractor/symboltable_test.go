@@ -11,7 +11,7 @@ import (
 )
 
 func TestCollectSymbolTableMultipleASTs(t *testing.T) {
-	testdataPath := filepath.Join("..", "testdata", "go-backend", "intermediate_representation")
+	testdataPath := filepath.Join("..", "testdata", "outputs", "intermediate_representation")
 
 	asts, err := extractor.LoadSimplifiedASTs(testdataPath)
 	if err != nil {
@@ -30,7 +30,7 @@ func TestCollectSymbolTableMultipleASTs(t *testing.T) {
 	}
 
 	// Read expected symbol keys from symbol_table.txt
-	expectedPath := filepath.Join("..", "testdata", "go-backend", "symbol_table.txt")
+	expectedPath := filepath.Join("..", "testdata", "outputs", "symbol_table.txt")
 	file, err := os.Open(expectedPath)
 	if err != nil {
 		t.Fatalf("Failed to open symbol_table.txt: %v", err)

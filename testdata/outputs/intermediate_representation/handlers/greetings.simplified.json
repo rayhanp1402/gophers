@@ -1,0 +1,251 @@
+{
+  "type": "File",
+  "name": "greetings.go",
+  "children": [
+    {
+      "type": "Package",
+      "name": "handlers",
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+        "line": 0,
+        "character": 8
+      }
+    },
+    {
+      "type": "Import",
+      "name": "fmt",
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+        "line": 3,
+        "character": 1
+      }
+    },
+    {
+      "type": "Import",
+      "name": "net/http",
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+        "line": 4,
+        "character": 1
+      }
+    },
+    {
+      "type": "GlobalVar",
+      "children": [
+        {
+          "type": "Ident",
+          "name": "DefaultName",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+            "line": 7,
+            "character": 6
+          },
+          "declaredAt": {
+            "Name": "DefaultName",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+            "Line": 7,
+            "Character": 6,
+            "Kind": "const",
+            "Type": "untyped string",
+            "ReceiverType": "",
+            "PackageName": "handlers"
+          }
+        }
+      ],
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+        "line": 7,
+        "character": 6
+      }
+    },
+    {
+      "type": "Function",
+      "name": "SayHello",
+      "children": [
+        {
+          "type": "Params",
+          "children": [
+            {
+              "type": "Field",
+              "children": [
+                {
+                  "type": "Ident",
+                  "name": "w",
+                  "position": {
+                    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+                    "line": 9,
+                    "character": 14
+                  },
+                  "declaredAt": {
+                    "Name": "w",
+                    "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+                    "Line": 9,
+                    "Character": 14,
+                    "Kind": "var",
+                    "Type": "net/http.ResponseWriter",
+                    "ReceiverType": "",
+                    "PackageName": "handlers"
+                  }
+                },
+                {
+                  "type": "SelectorExpr",
+                  "name": "http.ResponseWriter",
+                  "position": {
+                    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+                    "line": 9,
+                    "character": 21
+                  },
+                  "declaredAt": {
+                    "Name": "ResponseWriter",
+                    "URI": "file://C:/Program Files/Go/src/net/http/server.go",
+                    "Line": 95,
+                    "Character": 5,
+                    "Kind": "typename",
+                    "Type": "net/http.ResponseWriter",
+                    "ReceiverType": "",
+                    "PackageName": "http"
+                  }
+                }
+              ],
+              "position": {
+                "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+                "line": 9,
+                "character": 14
+              }
+            },
+            {
+              "type": "Field",
+              "children": [
+                {
+                  "type": "Ident",
+                  "name": "name",
+                  "position": {
+                    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+                    "line": 9,
+                    "character": 37
+                  },
+                  "declaredAt": {
+                    "Name": "name",
+                    "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+                    "Line": 9,
+                    "Character": 37,
+                    "Kind": "var",
+                    "Type": "string",
+                    "ReceiverType": "",
+                    "PackageName": "handlers"
+                  }
+                },
+                {
+                  "type": "Ident",
+                  "name": "string",
+                  "position": {
+                    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+                    "line": 9,
+                    "character": 42
+                  },
+                  "declaredAt": {
+                    "Name": "string",
+                    "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend",
+                    "Line": -1,
+                    "Character": -1,
+                    "Kind": "typename",
+                    "Type": "string",
+                    "ReceiverType": "",
+                    "PackageName": ""
+                  }
+                }
+              ],
+              "position": {
+                "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+                "line": 9,
+                "character": 37
+              }
+            }
+          ],
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+            "line": 9,
+            "character": 13
+          }
+        },
+        {
+          "type": "MethodCall",
+          "name": "Fprintf",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+            "line": 10,
+            "character": 5
+          },
+          "declaredAt": {
+            "Name": "Fprintf",
+            "URI": "file://C:/Program Files/Go/src/fmt/print.go",
+            "Line": 221,
+            "Character": 5,
+            "Kind": "func",
+            "Type": "func(w io.Writer, format string, a ...any) (n int, err error)",
+            "ReceiverType": "",
+            "PackageName": "fmt"
+          }
+        },
+        {
+          "type": "VarUse",
+          "name": "w",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+            "line": 10,
+            "character": 13
+          },
+          "declaredAt": {
+            "Name": "w",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+            "Line": 9,
+            "Character": 14,
+            "Kind": "var",
+            "Type": "net/http.ResponseWriter",
+            "ReceiverType": "",
+            "PackageName": "handlers"
+          }
+        },
+        {
+          "type": "VarUse",
+          "name": "name",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+            "line": 10,
+            "character": 32
+          },
+          "declaredAt": {
+            "Name": "name",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+            "Line": 9,
+            "Character": 37,
+            "Kind": "var",
+            "Type": "string",
+            "ReceiverType": "",
+            "PackageName": "handlers"
+          }
+        }
+      ],
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+        "line": 9,
+        "character": 0
+      },
+      "declaredAt": {
+        "Name": "SayHello",
+        "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+        "Line": 9,
+        "Character": 5,
+        "Kind": "func",
+        "Type": "func(w net/http.ResponseWriter, name string)",
+        "ReceiverType": "",
+        "PackageName": "handlers"
+      }
+    }
+  ],
+  "position": {
+    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+    "line": 0,
+    "character": 0
+  }
+}

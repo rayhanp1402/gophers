@@ -1,0 +1,515 @@
+{
+  "type": "File",
+  "name": "main.go",
+  "children": [
+    {
+      "type": "Package",
+      "name": "main",
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+        "line": 0,
+        "character": 8
+      }
+    },
+    {
+      "type": "Import",
+      "name": "log",
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+        "line": 3,
+        "character": 1
+      }
+    },
+    {
+      "type": "Import",
+      "name": "net/http",
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+        "line": 4,
+        "character": 1
+      }
+    },
+    {
+      "type": "Import",
+      "name": "example.com/go-backend/handlers",
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+        "line": 6,
+        "character": 1
+      }
+    },
+    {
+      "type": "Type",
+      "name": "UselessInt",
+      "children": [
+        {
+          "type": "Ident",
+          "name": "int",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 9,
+            "character": 16
+          },
+          "declaredAt": {
+            "Name": "int",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend",
+            "Line": -1,
+            "Character": -1,
+            "Kind": "typename",
+            "Type": "int",
+            "ReceiverType": "",
+            "PackageName": ""
+          }
+        }
+      ],
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+        "line": 9,
+        "character": 5
+      },
+      "declaredAt": {
+        "Name": "UselessInt",
+        "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+        "Line": 9,
+        "Character": 5,
+        "Kind": "typename",
+        "Type": "main.UselessInt",
+        "ReceiverType": "",
+        "PackageName": "main"
+      }
+    },
+    {
+      "type": "Function",
+      "name": "main",
+      "children": [
+        {
+          "type": "Params",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 11,
+            "character": 9
+          }
+        },
+        {
+          "type": "MethodCall",
+          "name": "HandleFunc",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 12,
+            "character": 6
+          },
+          "declaredAt": {
+            "Name": "HandleFunc",
+            "URI": "file://C:/Program Files/Go/src/net/http/server.go",
+            "Line": 2786,
+            "Character": 5,
+            "Kind": "func",
+            "Type": "func(pattern string, handler func(net/http.ResponseWriter, *net/http.Request))",
+            "ReceiverType": "",
+            "PackageName": "http"
+          }
+        },
+        {
+          "type": "MethodCall",
+          "name": "CalculateHandler",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 12,
+            "character": 40
+          },
+          "declaredAt": {
+            "Name": "CalculateHandler",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go",
+            "Line": 12,
+            "Character": 6,
+            "Kind": "func",
+            "Type": "func(w net/http.ResponseWriter, r *net/http.Request)",
+            "ReceiverType": "",
+            "PackageName": "handlers"
+          }
+        },
+        {
+          "type": "MethodCall",
+          "name": "HandleFunc",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 14,
+            "character": 6
+          },
+          "declaredAt": {
+            "Name": "HandleFunc",
+            "URI": "file://C:/Program Files/Go/src/net/http/server.go",
+            "Line": 2786,
+            "Character": 5,
+            "Kind": "func",
+            "Type": "func(pattern string, handler func(net/http.ResponseWriter, *net/http.Request))",
+            "ReceiverType": "",
+            "PackageName": "http"
+          }
+        },
+        {
+          "type": "VarUse",
+          "name": "w",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 14,
+            "character": 32
+          },
+          "declaredAt": {
+            "Name": "w",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "Line": 14,
+            "Character": 32,
+            "Kind": "var",
+            "Type": "net/http.ResponseWriter",
+            "ReceiverType": "",
+            "PackageName": "main"
+          }
+        },
+        {
+          "type": "TypeUse",
+          "name": "ResponseWriter",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 14,
+            "character": 39
+          },
+          "declaredAt": {
+            "Name": "ResponseWriter",
+            "URI": "file://C:/Program Files/Go/src/net/http/server.go",
+            "Line": 96,
+            "Character": 6,
+            "Kind": "type",
+            "Type": "net/http.ResponseWriter",
+            "ReceiverType": "",
+            "PackageName": "http"
+          }
+        },
+        {
+          "type": "VarUse",
+          "name": "r",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 14,
+            "character": 55
+          },
+          "declaredAt": {
+            "Name": "r",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "Line": 14,
+            "Character": 55,
+            "Kind": "var",
+            "Type": "*net/http.Request",
+            "ReceiverType": "",
+            "PackageName": "main"
+          }
+        },
+        {
+          "type": "TypeUse",
+          "name": "Request",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 14,
+            "character": 63
+          },
+          "declaredAt": {
+            "Name": "Request",
+            "URI": "file://C:/Program Files/Go/src/net/http/request.go",
+            "Line": 112,
+            "Character": 6,
+            "Kind": "type",
+            "Type": "net/http.Request",
+            "ReceiverType": "",
+            "PackageName": "http"
+          }
+        },
+        {
+          "type": "VarUse",
+          "name": "name",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 15,
+            "character": 2
+          },
+          "declaredAt": {
+            "Name": "name",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "Line": 15,
+            "Character": 2,
+            "Kind": "var",
+            "Type": "string",
+            "ReceiverType": "",
+            "PackageName": "main"
+          }
+        },
+        {
+          "type": "MethodCall",
+          "name": "Get",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 15,
+            "character": 24
+          },
+          "declaredAt": {
+            "Name": "Get",
+            "URI": "file://C:/Program Files/Go/src/net/url/url.go",
+            "Line": 921,
+            "Character": 16,
+            "Kind": "func",
+            "Type": "func(key string) string",
+            "ReceiverType": "Values",
+            "PackageName": "url"
+          }
+        },
+        {
+          "type": "VarUse",
+          "name": "name",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 16,
+            "character": 5
+          },
+          "declaredAt": {
+            "Name": "name",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "Line": 15,
+            "Character": 2,
+            "Kind": "var",
+            "Type": "string",
+            "ReceiverType": "",
+            "PackageName": "main"
+          }
+        },
+        {
+          "type": "VarUse",
+          "name": "name",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 17,
+            "character": 3
+          },
+          "declaredAt": {
+            "Name": "name",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "Line": 15,
+            "Character": 2,
+            "Kind": "var",
+            "Type": "string",
+            "ReceiverType": "",
+            "PackageName": "main"
+          }
+        },
+        {
+          "type": "FieldUse",
+          "name": "DefaultName",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 17,
+            "character": 19
+          },
+          "declaredAt": {
+            "Name": "DefaultName",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+            "Line": 8,
+            "Character": 7,
+            "Kind": "const",
+            "Type": "untyped string",
+            "ReceiverType": "",
+            "PackageName": "handlers"
+          }
+        },
+        {
+          "type": "MethodCall",
+          "name": "SayHello",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 19,
+            "character": 11
+          },
+          "declaredAt": {
+            "Name": "SayHello",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go",
+            "Line": 9,
+            "Character": 5,
+            "Kind": "func",
+            "Type": "func(w net/http.ResponseWriter, name string)",
+            "ReceiverType": "",
+            "PackageName": "handlers"
+          }
+        },
+        {
+          "type": "VarUse",
+          "name": "w",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 19,
+            "character": 20
+          },
+          "declaredAt": {
+            "Name": "w",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "Line": 14,
+            "Character": 32,
+            "Kind": "var",
+            "Type": "net/http.ResponseWriter",
+            "ReceiverType": "",
+            "PackageName": "main"
+          }
+        },
+        {
+          "type": "VarUse",
+          "name": "name",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 19,
+            "character": 23
+          },
+          "declaredAt": {
+            "Name": "name",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "Line": 15,
+            "Character": 2,
+            "Kind": "var",
+            "Type": "string",
+            "ReceiverType": "",
+            "PackageName": "main"
+          }
+        },
+        {
+          "type": "MethodCall",
+          "name": "Println",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 22,
+            "character": 5
+          },
+          "declaredAt": {
+            "Name": "Println",
+            "URI": "file://C:/Program Files/Go/src/log/log.go",
+            "Line": 403,
+            "Character": 5,
+            "Kind": "func",
+            "Type": "func(v ...any)",
+            "ReceiverType": "",
+            "PackageName": "log"
+          }
+        },
+        {
+          "type": "VarUse",
+          "name": "err",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 23,
+            "character": 4
+          },
+          "declaredAt": {
+            "Name": "err",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "Line": 23,
+            "Character": 4,
+            "Kind": "var",
+            "Type": "error",
+            "ReceiverType": "",
+            "PackageName": "main"
+          }
+        },
+        {
+          "type": "MethodCall",
+          "name": "ListenAndServe",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 23,
+            "character": 16
+          },
+          "declaredAt": {
+            "Name": "ListenAndServe",
+            "URI": "file://C:/Program Files/Go/src/net/http/server.go",
+            "Line": 3511,
+            "Character": 5,
+            "Kind": "func",
+            "Type": "func(addr string, handler net/http.Handler) error",
+            "ReceiverType": "",
+            "PackageName": "http"
+          }
+        },
+        {
+          "type": "VarUse",
+          "name": "err",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 23,
+            "character": 46
+          },
+          "declaredAt": {
+            "Name": "err",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "Line": 23,
+            "Character": 4,
+            "Kind": "var",
+            "Type": "error",
+            "ReceiverType": "",
+            "PackageName": "main"
+          }
+        },
+        {
+          "type": "MethodCall",
+          "name": "Fatal",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 24,
+            "character": 6
+          },
+          "declaredAt": {
+            "Name": "Fatal",
+            "URI": "file://C:/Program Files/Go/src/log/log.go",
+            "Line": 410,
+            "Character": 5,
+            "Kind": "func",
+            "Type": "func(v ...any)",
+            "ReceiverType": "",
+            "PackageName": "log"
+          }
+        },
+        {
+          "type": "VarUse",
+          "name": "err",
+          "position": {
+            "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "line": 24,
+            "character": 12
+          },
+          "declaredAt": {
+            "Name": "err",
+            "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+            "Line": 23,
+            "Character": 4,
+            "Kind": "var",
+            "Type": "error",
+            "ReceiverType": "",
+            "PackageName": "main"
+          }
+        }
+      ],
+      "position": {
+        "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+        "line": 11,
+        "character": 0
+      },
+      "declaredAt": {
+        "Name": "main",
+        "URI": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+        "Line": 11,
+        "Character": 5,
+        "Kind": "func",
+        "Type": "func()",
+        "ReceiverType": "",
+        "PackageName": "main"
+      }
+    }
+  ],
+  "position": {
+    "uri": "file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go",
+    "line": 0,
+    "character": 0
+  }
+}

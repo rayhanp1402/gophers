@@ -1,0 +1,170 @@
+Position: file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:3:1
+  Name: A
+  Kind: field
+  Type: int
+  URI: file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go
+  Line: 3, Character: 1
+  Receiver Type: 
+
+  Package Name: 
+
+Position: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:0
+  Name: CalculateSum
+  Kind: method
+  Type: 
+  URI: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go
+  Line: 30, Character: 0
+  Receiver Type: Calculator
+
+  Package Name: 
+
+Position: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:30:33
+  Name: req
+  Kind: param
+  Type: models.CalculationRequest
+  URI: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go
+  Line: 30, Character: 33
+  Receiver Type: 
+
+  Package Name: 
+
+Position: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:9:5
+  Name: Calculator
+  Kind: struct
+  Type: 
+  URI: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go
+  Line: 9, Character: 5
+  Receiver Type: 
+
+  Package Name: handlers
+
+Position: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:0
+  Name: SayHello
+  Kind: func
+  Type: 
+  URI: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go
+  Line: 9, Character: 0
+  Receiver Type: 
+
+  Package Name: 
+
+Position: file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:11:0
+  Name: main
+  Kind: func
+  Type: 
+  URI: file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go
+  Line: 11, Character: 0
+  Receiver Type: 
+
+  Package Name: 
+
+Position: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:0
+  Name: CalculateHandler
+  Kind: func
+  Type: 
+  URI: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go
+  Line: 11, Character: 0
+  Receiver Type: 
+
+  Package Name: 
+
+Position: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:7:6
+  Name: DefaultName
+  Kind: var
+  Type: 
+  URI: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go
+  Line: 7, Character: 6
+  Receiver Type: 
+
+  Package Name: 
+
+Position: file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:4:1
+  Name: B
+  Kind: field
+  Type: int
+  URI: file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go
+  Line: 4, Character: 1
+  Receiver Type: 
+
+  Package Name: 
+
+Position: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:45
+  Name: r
+  Kind: param
+  Type: *net/http.Request
+  URI: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go
+  Line: 11, Character: 45
+  Receiver Type: 
+
+  Package Name: 
+
+Position: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:14
+  Name: w
+  Kind: param
+  Type: http.ResponseWriter
+  URI: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go
+  Line: 9, Character: 14
+  Receiver Type: 
+
+  Package Name: 
+
+Position: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go:9:37
+  Name: name
+  Kind: param
+  Type: string
+  URI: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/greetings.go
+  Line: 9, Character: 37
+  Receiver Type: 
+
+  Package Name: 
+
+Position: file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go:9:5
+  Name: UselessInt
+  Kind: type
+  Type: 
+  URI: file://C:/Tugas_Akhir/gophers/testdata/go-backend/main.go
+  Line: 9, Character: 5
+  Receiver Type: 
+
+  Package Name: main
+
+Position: file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:8:1
+  Name: Sum
+  Kind: field
+  Type: int
+  URI: file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go
+  Line: 8, Character: 1
+  Receiver Type: 
+
+  Package Name: 
+
+Position: file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:2:5
+  Name: CalculationRequest
+  Kind: struct
+  Type: 
+  URI: file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go
+  Line: 2, Character: 5
+  Receiver Type: 
+
+  Package Name: models
+
+Position: file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go:7:5
+  Name: CalculationResult
+  Kind: struct
+  Type: 
+  URI: file://C:/Tugas_Akhir/gophers/testdata/go-backend/models/calculation.go
+  Line: 7, Character: 5
+  Receiver Type: 
+
+  Package Name: models
+
+Position: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go:11:22
+  Name: w
+  Kind: param
+  Type: http.ResponseWriter
+  URI: file://C:/Tugas_Akhir/gophers/testdata/go-backend/handlers/calculator.go
+  Line: 11, Character: 22
+  Receiver Type: 
+
+  Package Name: 
+
