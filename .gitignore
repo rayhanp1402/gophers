@@ -1,4 +1,7 @@
-/out
+/knowledge_graph
 /parsed_metadata
 /intermediate_representation
 /symbol_table.txt
+/testdata/go-backend/knowledge_graph
+/testdata/go-backend/intermediate_representation
+/testdata/go-backend/symbol_table.txt
