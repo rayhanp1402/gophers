@@ -262,6 +262,10 @@ func GenerateReturnsEdges(
 	for key, def := range symbols {
 		if def.Kind == "struct" || def.Kind == "interface" || def.Kind == "type" {
 			typeNodeMap[def.Name] = toNodeID(key)
+			// Also map fully qualified name if package is known
+			if def.PackageName != "" {
+				typeNodeMap[def.PackageName+"."+def.Name] = toNodeID(key)
+			}
 		}
 	}
 
@@ -272,26 +276,44 @@ func GenerateReturnsEdges(
 				sourceKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
 				sourceID := toNodeID(sourceKey)
 
-				if def, ok := symbols[sourceKey]; ok {
-					typeName := def.Type
-					if isPrimitiveType(typeName) || typeName == "" {
-						// skip void or primitive returns
-						return
-					}
-					if targetID, found := typeNodeMap[typeName]; found {
-						edgeID := fmt.Sprintf("%s->%s.returns", sourceID, targetID)
-						edges = append(edges, GraphEdge{
-							Data: EdgeData{
-								ID:     edgeID,
-								Label:  "returns",
-								Source: sourceID,
-								Target: targetID,
-								Properties: map[string]string{
-									"from": def.Name,
-									"to":   typeName,
-								},
-							},
-						})
+				for _, child := range node.Children {
+					if child.Type == "Results" {
+						for _, result := range child.Children {
+							for _, ident := range result.Children {
+								if ident.Type == "Ident" || ident.Type == "SelectorExpr" {
+									var typeName string
+									if ident.Type == "SelectorExpr" {
+										// Expecting children: [Package Ident, Type Ident]
+										if len(ident.Children) == 2 &&
+											ident.Children[0].Type == "Ident" &&
+											ident.Children[1].Type == "Ident" {
+											pkg := ident.Children[0].Name
+											name := ident.Children[1].Name
+											typeName = pkg + "." + name
+										}
+									} else {
+										typeName = ident.Name
+									}
+
+									if isPrimitiveType(typeName) || typeName == "" {
+										continue
+									}
+									if targetID, ok := typeNodeMap[typeName]; ok {
+										edges = append(edges, GraphEdge{
+											Data: EdgeData{
+												ID:     fmt.Sprintf("%s->%s.returns", sourceID, targetID),
+												Label:  "returns",
+												Source: sourceID,
+												Target: targetID,
+												Properties: map[string]string{
+													"type": typeName,
+												},
+											},
+										})
+									}
+								}
+							}
+						}
 					}
 				}
 			}
