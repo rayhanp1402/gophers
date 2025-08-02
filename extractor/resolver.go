@@ -339,10 +339,29 @@ func buildSimplifiedASTWithGlobals(
 
 	case *ast.Field:
 		simp = newNode("Field", "", fset, path, n.Pos(), nil)
+
+		// Add any field names (e.g., for parameters or named return values)
 		for _, name := range n.Names {
 			addChild(name)
 		}
-		addChild(n.Type)
+
+		// Add the type node, even if the field is unnamed
+		if n.Type != nil {
+			switch typ := n.Type.(type) {
+			case *ast.Ident:
+				// Built-in or local type
+				typeNode := newNode("Ident", typ.Name, fset, path, typ.Pos(), typesInfo.ObjectOf(typ))
+				children = append(children, typeNode)
+			case *ast.SelectorExpr:
+				// Imported type (e.g., models.CalculationResult)
+				if sel := typ.Sel; sel != nil {
+					typeNode := newNode("SelectorExpr", fmt.Sprintf("%s.%s", renderExpr(typ.X), sel.Name), fset, path, sel.Pos(), typesInfo.ObjectOf(sel))
+					children = append(children, typeNode)
+				}
+			default:
+				addChild(n.Type) // fallback for complex cases (arrays, pointers, etc.)
+			}
+		}
 
 	case *ast.ValueSpec:
 		fmt.Println("Processing GlobalVar")
@@ -507,6 +526,15 @@ func receiverType(obj types.Object) string {
 		}
 	}
 	return ""
+}
+
+func renderExpr(expr ast.Expr) string {
+	switch x := expr.(type) {
+	case *ast.Ident:
+		return x.Name
+	default:
+		return "<unknown>"
+	}
 }
 
 func OutputSimplifiedASTs(fset *token.FileSet, files map[string]*ast.File, projectRoot string, outDir string, typesInfo *types.Info) error {
