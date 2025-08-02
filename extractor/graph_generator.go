@@ -257,14 +257,12 @@ func GenerateReturnsEdges(
 ) []GraphEdge {
 	var edges []GraphEdge
 
-	// Build type lookup
-	typeNodeMap := map[string]string{}
+	// Map type name to node ID
+	typeNameToID := map[string]string{}
 	for key, def := range symbols {
-		if def.Kind == "struct" || def.Kind == "interface" || def.Kind == "type" {
-			typeNodeMap[def.Name] = toNodeID(key)
-			// Also map fully qualified name if package is known
-			if def.PackageName != "" {
-				typeNodeMap[def.PackageName+"."+def.Name] = toNodeID(key)
+		if def.Kind == "type" || def.Kind == "struct" || def.Kind == "interface" {
+			if !isPrimitiveType(def.Name) {
+				typeNameToID[def.Name] = toNodeID(key)
 			}
 		}
 	}
@@ -279,34 +277,21 @@ func GenerateReturnsEdges(
 				for _, child := range node.Children {
 					if child.Type == "Results" {
 						for _, result := range child.Children {
-							for _, ident := range result.Children {
-								if ident.Type == "Ident" || ident.Type == "SelectorExpr" {
-									var typeName string
-									if ident.Type == "SelectorExpr" {
-										// Expecting children: [Package Ident, Type Ident]
-										if len(ident.Children) == 2 &&
-											ident.Children[0].Type == "Ident" &&
-											ident.Children[1].Type == "Ident" {
-											pkg := ident.Children[0].Name
-											name := ident.Children[1].Name
-											typeName = pkg + "." + name
-										}
-									} else {
-										typeName = ident.Name
-									}
-
-									if isPrimitiveType(typeName) || typeName == "" {
-										continue
-									}
-									if targetID, ok := typeNodeMap[typeName]; ok {
+							for _, ret := range result.Children {
+								// Use declaredAt if available
+								if ret.DeclaredAt != nil {
+									typeName := ret.DeclaredAt.Name
+									if targetID, ok := typeNameToID[typeName]; ok {
+										edgeID := fmt.Sprintf("%s->%s.returns", sourceID, targetID)
 										edges = append(edges, GraphEdge{
 											Data: EdgeData{
-												ID:     fmt.Sprintf("%s->%s.returns", sourceID, targetID),
+												ID:     edgeID,
 												Label:  "returns",
 												Source: sourceID,
 												Target: targetID,
 												Properties: map[string]string{
-													"type": typeName,
+													"from": node.Name,
+													"to":   typeName,
 												},
 											},
 										})
@@ -317,6 +302,7 @@ func GenerateReturnsEdges(
 					}
 				}
 			}
+
 			for _, child := range node.Children {
 				walk(child)
 			}
