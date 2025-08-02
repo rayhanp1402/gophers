@@ -636,33 +636,39 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 		case "Params":
 			for _, field := range node.Children {
 				if field.Type == "Field" {
-					var fieldType string
+					var paramNames []*SimplifiedASTNode
+					var paramType string
 
 					for _, sub := range field.Children {
-						if sub.Type == "Ident" || sub.Type == "SelectorExpr" || sub.Type == "StarExpr" {
+						switch sub.Type {
+						case "Ident":
+							paramNames = append(paramNames, sub)
+						case "SelectorExpr", "StarExpr":
 							if sub.Name != "" {
-								fieldType = sub.Name
-								break
+								paramType = sub.Name
 							}
 						}
 					}
 
-					for _, sub := range field.Children {
-						if sub.Type == "Ident" && sub.Position != nil {
-							// Fallback: if no type found structurally, use DeclaredAt.Type
-							if fieldType == "" && sub.DeclaredAt != nil && sub.DeclaredAt.Type != "" {
-								fieldType = sub.DeclaredAt.Type
-							}
+					// Handle Ident type (like "int" or "string") if it's not in the second slot
+					if paramType == "" && len(paramNames) >= 2 {
+						paramType = paramNames[1].Name
+						paramNames = paramNames[:1] // strip off type from name list
+					}
 
-							identKey := fmt.Sprintf("%s:%d:%d", sub.Position.URI, sub.Position.Line, sub.Position.Character)
-							symbols[identKey] = &ModifiedDefinitionInfo{
-								Name:      sub.Name,
-								Kind:      "param",
-								Type:      fieldType,
-								URI:       sub.Position.URI,
-								Line:      sub.Position.Line,
-								Character: sub.Position.Character,
-							}
+					for _, ident := range paramNames {
+						t := paramType
+						if t == "" && ident.DeclaredAt != nil {
+							t = ident.DeclaredAt.Type
+						}
+						identKey := fmt.Sprintf("%s:%d:%d", ident.Position.URI, ident.Position.Line, ident.Position.Character)
+						symbols[identKey] = &ModifiedDefinitionInfo{
+							Name:      ident.Name,
+							Kind:      "param",
+							Type:      t,
+							URI:       ident.Position.URI,
+							Line:      ident.Position.Line,
+							Character: ident.Position.Character,
 						}
 					}
 				}
