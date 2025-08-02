@@ -257,46 +257,41 @@ func GenerateReturnsEdges(
 ) []GraphEdge {
 	var edges []GraphEdge
 
+	// Build type lookup
+	typeNodeMap := map[string]string{}
+	for key, def := range symbols {
+		if def.Kind == "struct" || def.Kind == "interface" || def.Kind == "type" {
+			typeNodeMap[def.Name] = toNodeID(key)
+		}
+	}
+
 	for _, root := range simplifiedASTs {
 		var walk func(node *SimplifiedASTNode)
 		walk = func(node *SimplifiedASTNode) {
-			if node.Type == "Function" || node.Type == "Method" {
-				if node.Position == nil {
-					return
-				}
+			if (node.Type == "Function" || node.Type == "Method") && node.Position != nil {
 				sourceKey := fmt.Sprintf("%s:%d:%d", node.Position.URI, node.Position.Line, node.Position.Character)
 				sourceID := toNodeID(sourceKey)
 
-				for _, child := range node.Children {
-					if child.Type == "Results" {
-						for _, result := range child.Children {
-							for _, ident := range result.Children {
-								if ident.Type == "Ident" && ident.Position != nil {
-									key := fmt.Sprintf("%s:%d:%d", ident.Position.URI, ident.Position.Line, ident.Position.Character)
-									if def, ok := symbols[key]; ok {
-										if def.Kind == "type" || def.Kind == "struct" || def.Kind == "interface" {
-											if isPrimitiveType(def.Name) {
-												continue
-											}
-											targetID := toNodeID(key)
-											edgeID := fmt.Sprintf("%s->%s.returns", sourceID, targetID)
-											edges = append(edges, GraphEdge{
-												Data: EdgeData{
-													ID:     edgeID,
-													Label:  "returns",
-													Source: sourceID,
-													Target: targetID,
-													Properties: map[string]string{
-														"from": node.Name,
-														"to":   def.Name,
-													},
-												},
-											})
-										}
-									}
-								}
-							}
-						}
+				if def, ok := symbols[sourceKey]; ok {
+					typeName := def.Type
+					if isPrimitiveType(typeName) || typeName == "" {
+						// skip void or primitive returns
+						return
+					}
+					if targetID, found := typeNodeMap[typeName]; found {
+						edgeID := fmt.Sprintf("%s->%s.returns", sourceID, targetID)
+						edges = append(edges, GraphEdge{
+							Data: EdgeData{
+								ID:     edgeID,
+								Label:  "returns",
+								Source: sourceID,
+								Target: targetID,
+								Properties: map[string]string{
+									"from": def.Name,
+									"to":   typeName,
+								},
+							},
+						})
 					}
 				}
 			}
