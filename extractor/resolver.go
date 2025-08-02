@@ -721,49 +721,6 @@ func CollectSymbolTable(ast *SimplifiedASTNode) map[string]*ModifiedDefinitionIn
 					PackageName:  packageName,
 				}
 			}
-
-		case "Results":
-			for _, field := range node.Children {
-				if field.Type == "Field" {
-					var fieldType string
-
-					// Find the type (e.g., Ident or SelectorExpr)
-					for _, sub := range field.Children {
-						if sub.Type == "Ident" || sub.Type == "SelectorExpr" {
-							fieldType = sub.Name
-						}
-					}
-
-					// Unnamed return values — just collect the type
-					if len(field.Children) == 1 && field.Children[0].Position != nil {
-						sub := field.Children[0]
-						resultKey := fmt.Sprintf("%s:%d:%d", sub.Position.URI, sub.Position.Line, sub.Position.Character)
-						symbols[resultKey] = &ModifiedDefinitionInfo{
-							Name:      "", // Unnamed return
-							Kind:      "result",
-							Type:      fieldType,
-							URI:       sub.Position.URI,
-							Line:      sub.Position.Line,
-							Character: sub.Position.Character,
-						}
-					}
-
-					// Named return values
-					for _, sub := range field.Children {
-						if sub.Type == "Ident" && sub.Position != nil && sub.Name != fieldType {
-							resultKey := fmt.Sprintf("%s:%d:%d", sub.Position.URI, sub.Position.Line, sub.Position.Character)
-							symbols[resultKey] = &ModifiedDefinitionInfo{
-								Name:      sub.Name,
-								Kind:      "result",
-								Type:      fieldType,
-								URI:       sub.Position.URI,
-								Line:      sub.Position.Line,
-								Character: sub.Position.Character,
-							}
-						}
-					}
-				}
-			}
 		}
 
 		for _, child := range node.Children {

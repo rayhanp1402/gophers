@@ -417,21 +417,26 @@ func GenerateTypedEdges(
 ) []GraphEdge {
 	var edges []GraphEdge
 
-	// Map all known type node positions for lookup
+	// Build a map of all known type definitions using fully qualified names
 	typeNodeMap := map[string]string{}
 	for key, def := range symbols {
 		if def.Kind == "struct" || def.Kind == "interface" || def.Kind == "type" {
-			typeNodeMap[def.Name] = toNodeID(key)
+			qualified := def.Name
+			if def.PackageName != "" {
+				qualified = def.PackageName + "." + def.Name
+			}
+			typeNodeMap[qualified] = toNodeID(key)
 		}
 	}
 
-	// For every variable symbol, check if its Type points to a known Type symbol
+	// For every variable/field/param, check if its Type maps to a known type
 	for symKey, def := range symbols {
 		if def.Kind != "param" && def.Kind != "var" && def.Kind != "field" {
 			continue
 		}
 
-		typeName := def.Type
+		typeName := strings.TrimLeft(def.Type, "*[]") // clean pointer/slice prefix
+
 		if typeID, ok := typeNodeMap[typeName]; ok {
 			edges = append(edges, GraphEdge{
 				Data: EdgeData{
@@ -440,7 +445,7 @@ func GenerateTypedEdges(
 					Source: toNodeID(symKey),
 					Target: typeID,
 					Properties: map[string]string{
-						"type": typeName,
+						"type": def.Type, // preserve original form (e.g., "*models.X")
 					},
 				},
 			})
