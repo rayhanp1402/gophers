@@ -713,28 +713,25 @@ func GenerateRequiresEdges(
 ) []GraphEdge {
 	var edges []GraphEdge
 
-	// Map from package name to the actual file URI (from fileNode.Position.URI)
-	packageToFile := make(map[string]string)
+	// Map from package name to all file URIs that declare that package
+	packageToFiles := make(map[string][]string)
+
 	for _, fileNode := range simplifiedASTs {
 		for _, child := range fileNode.Children {
-			if child.Type == "Package" {
-				// Store absolute path from the fileNode’s URI
+			if child.Type == "Package" && fileNode.Position != nil {
 				uri := strings.TrimPrefix(fileNode.Position.URI, "file://")
-				packageToFile[child.Name] = uri
+				packageToFiles[child.Name] = append(packageToFiles[child.Name], uri)
 			}
 		}
 	}
 
 	for _, fileNode := range simplifiedASTs {
-		var importedPkgs []string
-		var sourceURI string
-
-		if fileNode.Position != nil {
-			sourceURI = strings.TrimPrefix(fileNode.Position.URI, "file://")
-		} else {
-			continue // skip if file has no position info
+		if fileNode.Position == nil {
+			continue
 		}
+		sourceURI := strings.TrimPrefix(fileNode.Position.URI, "file://")
 
+		var importedPkgs []string
 		for _, child := range fileNode.Children {
 			if child.Type == "Import" {
 				importPath := strings.Trim(child.Name, `"`)
@@ -743,25 +740,27 @@ func GenerateRequiresEdges(
 		}
 
 		for _, pkg := range importedPkgs {
-			requiredURI, ok := packageToFile[path.Base(pkg)]
-			if !ok || requiredURI == sourceURI {
-				continue
-			}
+			targetFiles := packageToFiles[path.Base(pkg)]
+			for _, targetURI := range targetFiles {
+				if targetURI == sourceURI {
+					continue
+				}
 
-			sourceID := toNodeID(sourceURI) + ".go"
-			targetID := toNodeID(requiredURI) + ".go"
+				sourceID := toNodeID(sourceURI) + ".go"
+				targetID := toNodeID(targetURI) + ".go"
 
-			edges = append(edges, GraphEdge{
-				Data: EdgeData{
-					ID:     sourceID + "_requires_" + targetID,
-					Label:  "requires",
-					Source: sourceID,
-					Target: targetID,
-					Properties: map[string]string{
-						"imported": pkg,
+				edges = append(edges, GraphEdge{
+					Data: EdgeData{
+						ID:     sourceID + "_requires_" + targetID,
+						Label:  "requires",
+						Source: sourceID,
+						Target: targetID,
+						Properties: map[string]string{
+							"imported": pkg,
+						},
 					},
-				},
-			})
+				})
+			}
 		}
 	}
 
