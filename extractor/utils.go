@@ -45,3 +45,7 @@ func WriteSymbolTableToFile(symbolTable map[string]*ModifiedDefinitionInfo, outp
 
 	return nil
 }
+
+func shouldIgnorePath(uri string) bool {
+	return strings.Contains(uri, "/knowledge_graph/") || strings.Contains(uri, "/intermediate_representation/")
+}

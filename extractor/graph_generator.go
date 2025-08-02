@@ -717,9 +717,16 @@ func GenerateRequiresEdges(
 	packageToFiles := make(map[string][]string)
 
 	for _, fileNode := range simplifiedASTs {
+		if fileNode.Position == nil {
+			continue
+		}
+		uri := strings.TrimPrefix(fileNode.Position.URI, "file://")
+		if shouldIgnorePath(uri) {
+			continue
+		}
+
 		for _, child := range fileNode.Children {
-			if child.Type == "Package" && fileNode.Position != nil {
-				uri := strings.TrimPrefix(fileNode.Position.URI, "file://")
+			if child.Type == "Package" {
 				packageToFiles[child.Name] = append(packageToFiles[child.Name], uri)
 			}
 		}
@@ -730,6 +737,9 @@ func GenerateRequiresEdges(
 			continue
 		}
 		sourceURI := strings.TrimPrefix(fileNode.Position.URI, "file://")
+		if shouldIgnorePath(sourceURI) {
+			continue
+		}
 
 		var importedPkgs []string
 		for _, child := range fileNode.Children {
