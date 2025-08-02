@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/rayhanp1402/gophers/extractor"
 )
@@ -19,6 +20,8 @@ const (
 )
 
 func main() {
+	start := time.Now()
+
 	// Parse command-line arguments
 	debug := flag.Bool("debug", false, "Keep intermediate files and symbol table for debugging")
 	flag.Usage = func() {
@@ -133,4 +136,7 @@ func main() {
 			log.Printf("Warning: failed to remove symbol table file: %v", err)
 		}
 	}
+
+	elapsed := time.Since(start)
+	fmt.Printf("Extraction completed in %s\n", elapsed)
 }
